@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Evaluation | KUMPAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/kumpas/assets/evaluation-ss_8UAUj.js"></script>
+  <link rel="modulepreload" crossorigin href="/kumpas/assets/evaluation-_42hO7To.js">
+  <link rel="stylesheet" crossorigin href="/kumpas/assets/evaluation-C7WLilqL.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html">KUMPAS <span>FSL</span></a>
+    <p class="header-context">Research evaluation dashboard</p>
+    <span class="privacy-badge"><span aria-hidden="true"></span> Private on this device</span>
+  </header>
+  <main class="wrap">
+    <section class="panel">
+      <p class="eyebrow">RESEARCH DASHBOARD</p>
+      <h1>Evaluation results</h1>
+      <p class="help">Summary of tests saved in this browser. Choose a category to see its metrics.</p>
+      <div class="tabs">
+        <button data-kind="all" class="active">All</button>
+        <button data-kind="static">Static</button>
+        <button data-kind="dynamic">Dynamic</button>
+      </div>
+      <div class="cards">
+        <article><small>Static · Correct signs translated to text</small><b id="translationAccuracy">—</b></article>
+        <article><small>Static · Correct text spoken aloud</small><b id="audioAccuracy">—</b></article>
+        <article><small>Static · Average recognition time</small><b id="processingTime">—</b></article>
+        <article><small>Static · Classification speed (decisions/second)</small><b id="classificationRate">—</b></article>
+        <article><small>Dynamic · Hand landmark tracking accuracy</small><b id="landmarkAccuracy">—</b></article>
+        <article><small>Dynamic · Correct text and spoken result</small><b id="dynamicMotionAccuracy">—</b></article>
+        <article><small>Dynamic · Average motion processing time</small><b id="spatiotemporalTime">—</b></article>
+        <article><small>Dynamic · Classification speed (decisions/second)</small><b id="dynamicRate">—</b></article>
+      </div>
+      <p class="record-count">Tests recorded: <b id="attemptCount">0</b></p>
+
+      <h2>Recorded tests</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th>Expected label</th><th>Recognized label</th><th>Text correct?</th><th>Speech correct?</th><th>Time (ms)</th><th>Decisions/second</th><th>Landmark accuracy (%)</th></tr></thead>
+          <tbody id="records"><tr><td colspan="9">No tests recorded yet.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button id="export">Download CSV</button>
+        <button id="clear" class="secondary">Delete all tests</button>
+      </div>
+      <p class="notice">Your data stays in this browser. Download a CSV copy if needed. Do not use participant names.</p>
+    </section>
+
+    <details class="panel">
+      <summary>Enter a test result manually</summary>
+      <p class="help">Use this form for a test measured outside the recognition page.</p>
+      <form id="entry" class="form">
+        <label>Sign type<select name="kind"><option value="static">Static (hold)</option><option value="dynamic">Dynamic (move)</option></select></label>
+        <label>Expected sign label<input name="expected" required></label>
+        <label>Recognized sign label<input name="predicted" required></label>
+        <label>Was the spoken result correct?<select name="audioCorrect"><option value="na">Not assessed</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label>Processing time (ms)<input name="processingMs" type="number" min="0" step="any" required></label>
+        <label>Number of classification decisions<input name="classificationCount" type="number" min="0" step="1" required></label>
+        <label>Measurement duration (seconds)<input name="elapsedSeconds" type="number" min="0.0001" step="any" required></label>
+        <label>Motion processing time (ms; dynamic only)<input name="spatiotemporalMs" type="number" min="0" step="any"></label>
+        <label>Landmark accuracy (%) — compare against independently annotated references<input name="landmarkAccuracy" type="number" min="0" max="100" step="any"></label>
+        <label>Test code only; do not enter a name<input name="testCode" placeholder="Example: P01-R01"></label>
+        <button type="submit">Save test</button>
+      </form>
+    </details>
+
+    <details class="panel">
+      <summary>How are the eight metrics calculated?</summary>
+      <ul class="metric-definitions">
+        <li><b>Static · Sign-to-text accuracy:</b> correctly recognized static signs ÷ all evaluated static tests × 100.</li>
+        <li><b>Static · Text-to-audio accuracy:</b> correct spoken results ÷ static tests with an audio assessment × 100.</li>
+        <li><b>Static · Average processing time:</b> average time to recognize a static sign, in milliseconds.</li>
+        <li><b>Static · Classification speed:</b> total decisions ÷ total measured seconds; unit is decisions per second.</li>
+        <li><b>Dynamic · Landmark tracking accuracy:</b> compare with independently annotated reference landmarks. MediaPipe's own output is not ground truth.</li>
+        <li><b>Dynamic · Motion-to-text-and-audio accuracy:</b> tests with both correct text and speech ÷ dynamic tests assessed for both × 100.</li>
+        <li><b>Dynamic · Average motion processing time:</b> average time to extract and classify motion features.</li>
+        <li><b>Dynamic · Classification speed:</b> total dynamic decisions ÷ total measured dynamic seconds; unit is decisions per second.</li>
+      </ul>
+      <p class="notice">For formal research, confirm with your adviser or statistician whether observations are paired before choosing a statistical test.</p>
+    </details>
+  </main>
+</body>
+</html>

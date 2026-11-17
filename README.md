@@ -25,6 +25,10 @@
 
 MediaPipe's JavaScript and WASM runtime are bundled with the app. The hand model is downloaded from Google's public model storage on first camera connection, so that connection requires internet access. Browser camera access requires localhost or HTTPS.
 
+## Deploy to GitHub Pages
+
+The GitHub Actions workflow builds and deploys this Vite app whenever changes are pushed to `main`. In the repository settings, open **Pages** and set **Build and deployment → Source** to **GitHub Actions**. The project site is [https://webdevjulie.github.io/kumpas/](https://webdevjulie.github.io/kumpas/). Use that HTTPS URL, allow camera access, and keep an internet connection for the first hand-model download.
+
 ## Train recognition
 
 The built-in letter preview estimates selected static letters (A, B, C, D, F, I, L, O, U, V, W, and Y); it is a geometric heuristic, not validated FSL accuracy. The data-preparation panel offers A–Z labels and custom approved labels. Other letters, including moving letters such as J and Z, and other signs need at least three varied, validated examples per sign label. KNN uses k = 3 and Euclidean distance; only training samples are used, and a label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. Labels are filled automatically and spoken after the same result remains stable for the configured hold time; users do not need to type while signing. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
