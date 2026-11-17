@@ -5,7 +5,7 @@
 ## Features
 
 - Recognition webpage using browser webcam access and MediaPipe Hand Landmarker.
-- Camera device selection, including Iriun Virtual Webcam when installed, running, and exposed to the browser.
+- Camera device selection for any browser-visible phone, laptop, USB, or virtual camera.
 - Palm-scale-normalized features for up to two hands and static/dynamic KNN recognition.
 - Four-step workflow for collecting samples, inspecting live mathematical features, classifying signs, and testing held-out samples.
 - Single or timed 25-frame sample capture, condition tags, per-label train/test splits, and JSON sample import/export.
@@ -21,7 +21,7 @@
 2. Run `npm install`.
 3. Run `npm run dev`.
 4. Open the Vite localhost URL in a supported browser and allow camera access.
-5. To use Iriun, start Iriun on the phone and computer, then select **Iriun Virtual Webcam** in the camera list. It must appear as a video input device in the browser.
+5. Select any camera exposed to the browser. To use a phone camera from a different computer, connect it with a webcam bridge such as Iriun, then refresh the camera list.
 
 MediaPipe's JavaScript and WASM runtime are bundled with the app. The hand model is downloaded from Google's public model storage on first camera connection, so that connection requires internet access. Browser camera access requires localhost or HTTPS.
 

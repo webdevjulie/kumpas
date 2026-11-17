@@ -178,14 +178,20 @@ async function refreshCameras(selectedId) {
   const cameras = await listCameras();
   const previous = selectedId ?? cameraSelect.value;
   cameraSelect.replaceChildren();
+  cameraSelect.add(new Option('Default camera (browser choice)', ''));
+  if (!cameras.length) {
+    return;
+  }
   cameras.forEach((camera, index) => {
     const option = document.createElement('option');
     option.value = camera.deviceId;
-    option.textContent = camera.label || `Camera ${index + 1}`;
+    option.textContent = camera.label || `Camera ${index + 1} (name after permission)`;
     cameraSelect.append(option);
   });
   if (previous && cameras.some(camera => camera.deviceId === previous)) {
     cameraSelect.value = previous;
+  } else if (!previous) {
+    cameraSelect.value = '';
   }
 }
 
@@ -283,7 +289,7 @@ async function connectCamera() {
     if (error?.name === 'NotAllowedError') {
       showError(new Error('Camera permission was denied. Allow camera access in your browser and try again.'));
     } else if (error?.name === 'NotFoundError') {
-      showError(new Error('No camera found. Start Iriun or connect a webcam, then try again.'));
+      showError(new Error('No available camera found. Connect or enable a camera, then refresh the camera list.'));
     } else {
       showError(error);
     }
@@ -784,8 +790,18 @@ byId('connectCamera').addEventListener('click', connectCamera);
 byId('disconnectCamera').addEventListener('click', () => {
   stopCameraConnection().catch(showError);
 });
+byId('refreshCameras').addEventListener('click', () => {
+  refreshCameras().catch(showError);
+});
 cameraSelect.addEventListener('focus', () => {
   refreshCameras().catch(showError);
+});
+cameraSelect.addEventListener('change', () => {
+  if (stream) connectCamera();
+});
+navigator.mediaDevices?.addEventListener?.('devicechange', () => {
+  const activeDeviceId = stream?.getVideoTracks()[0]?.getSettings().deviceId;
+  refreshCameras(activeDeviceId).catch(showError);
 });
 modeSelect.addEventListener('change', () => {
   sequence = [];
