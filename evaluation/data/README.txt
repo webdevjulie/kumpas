@@ -1,0 +1,1 @@
+Store exported evaluation CSV/JSON copies. Keep participant codes non-identifying.
