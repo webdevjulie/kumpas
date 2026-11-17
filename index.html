@@ -79,7 +79,7 @@
           <div><span>Recognition support</span><strong id="matchValue">--</strong></div>
           <div class="match-track"><span id="matchBar"></span></div>
         </div>
-        <p class="recognition-note">The built-in letter preview is limited and is not validated FSL accuracy.</p>
+        <p class="recognition-note">The built-in preview supports selected static letters and simple J/Z motion. It is a geometric heuristic, not validated FSL accuracy.</p>
         <div class="actions">
           <button id="speak" disabled>Replay audio</button>
           <button id="openTextTools" type="button" class="secondary">Open text tools</button>
@@ -98,7 +98,7 @@
       <section id="step-data" class="workflow-stage" role="tabpanel" aria-labelledby="tab-data">
         <h2>Gather approved sign samples</h2>
         <p class="help">Choose an approved sign, connect the camera, and capture varied samples. Data stays in this browser.</p>
-        <p class="notice">The built-in preview covers selected static letters only. Other signs need approved samples; J and Z need motion samples.</p>
+        <p class="notice">The built-in preview supports simple J/Z motion. For other dynamic signs, select Dynamic, capture at least 3 varied examples per sign while moving through its full path, then use Trained KNN. Re-capture dynamic samples saved before this update.</p>
         <div class="training-controls">
           <label>Sign or letter
             <select id="label">
@@ -182,7 +182,7 @@
           <label>Classifier
             <select id="classifierType">
               <option value="knn">Trained KNN (k = 3)</option>
-              <option value="preview">Limited geometric letter preview</option>
+              <option value="preview">Limited static &amp; J/Z motion preview</option>
             </select>
           </label>
           <button id="trainModel">Train model</button>

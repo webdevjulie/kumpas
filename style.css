@@ -1,16 +1,16 @@
 :root {
   font-family: "Montserrat", sans-serif;
   color: #18372a;
-  background: #f5f8f6;
+  background: #f4f7f5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --green: #16834b;
-  --green-dark: #12452e;
-  --green-pale: #e9f5ed;
-  --border: #dce8df;
-  --muted: #607367;
+  --green: #18764f;
+  --green-dark: #143b2d;
+  --green-pale: #eaf3ed;
+  --border: #e0e8e2;
+  --muted: #64736a;
   --surface: #fff;
-  --shadow: 0 8px 26px #173a250d;
+  --shadow: 0 10px 28px #173a2510;
 }
 
 * { box-sizing: border-box; }
@@ -18,7 +18,7 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #f5f8f6;
+  background: #f4f7f5;
   font-size: 14px;
   line-height: 1.45;
 }
@@ -28,8 +28,8 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 52px;
-  padding: 8px clamp(14px, 2.4vw, 32px);
+  min-height: 62px;
+  padding: 10px clamp(18px, 3vw, 44px);
   color: #fff;
   background: var(--green-dark);
 }
@@ -37,7 +37,7 @@ header {
 .brand {
   flex: 0 0 auto;
   color: #fff;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: .04em;
   text-decoration: none;
@@ -102,16 +102,16 @@ nav a:hover, nav a:focus-visible { text-decoration: underline; }
 .wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  max-width: none;
-  gap: 10px;
-  margin: 8px 0;
-  padding: 0 clamp(12px, 1.6vw, 24px);
+  max-width: 1560px;
+  gap: 16px;
+  margin: 24px auto;
+  padding: 0 clamp(16px, 2.5vw, 36px);
 }
 
 .panel {
-  padding: clamp(14px, 1.35vw, 20px);
+  padding: clamp(18px, 1.8vw, 28px);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--surface);
   box-shadow: var(--shadow);
 }
@@ -120,23 +120,23 @@ nav a:hover, nav a:focus-visible { text-decoration: underline; }
 
 .recognition-workspace {
   display: grid;
-  grid-template-columns: minmax(280px, 1.25fr) minmax(230px, .85fr);
+  grid-template-columns: minmax(0, 1.75fr) minmax(260px, .75fr);
   align-items: start;
-  gap: 12px;
+  gap: 16px;
 }
 
 .camera-panel, .result-panel { min-width: 0; }
 
 .intro {
-  padding: 10px 16px;
-  background: linear-gradient(112deg, #fff 45%, #edf7f0);
+  padding: clamp(20px, 2.4vw, 32px);
+  background: linear-gradient(110deg, #fff 45%, #eff7f1);
 }
 
 h1, h2, h3 { line-height: 1.25; }
-h1 { margin: 0 0 4px; font-size: clamp(1.3rem, 2vw, 1.75rem); letter-spacing: -.025em; }
+h1 { margin: 0 0 8px; font-size: clamp(1.65rem, 2.5vw, 2.25rem); letter-spacing: -.035em; }
 h2 { margin: 0 0 4px; font-size: clamp(1.05rem, 1.5vw, 1.3rem); letter-spacing: -.015em; }
 h3 { margin: 10px 0 5px; font-size: .95rem; }
-p { margin: 4px 0 6px; }
+p { margin: 5px 0 8px; }
 
 .eyebrow {
   margin: 0 0 8px;
@@ -191,7 +191,7 @@ details > summary {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 .section-heading h2 { margin: 1px 0 2px; }
 .section-heading p { margin: 0; }
@@ -219,19 +219,20 @@ details > summary {
 .workflow-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
 
 .workflow-tabs button {
-  min-height: 32px;
-  padding: 5px 8px;
-  font-size: .78rem;
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: .84rem;
   white-space: nowrap;
   color: var(--green-dark);
   background: #edf5ef;
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease;
 }
 
 .workflow-tabs button.active {
@@ -335,18 +336,32 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .secondary:hover:not(:disabled) { color: #fff; background: var(--green-dark); }
 .text-button { padding-inline: 0; color: var(--green-dark); background: transparent; }
 .text-button:hover:not(:disabled) { color: #9b2727; background: transparent; transform: none; }
+.workflow-tabs button:hover:not(:disabled):not(.active) {
+  color: var(--green-dark);
+  background: #e0f0e5;
+  transform: none;
+  box-shadow: inset 0 0 0 1px #b8d9c2;
+}
+.workflow-tabs button.active:hover:not(:disabled) {
+  color: #fff;
+  background: var(--green);
+  transform: none;
+  box-shadow: 0 2px 6px #12452e30;
+}
 
 .camera-frame {
   position: relative;
   width: 100%;
   max-width: none;
   min-height: 0;
-  max-height: 300px;
+  max-height: min(76vh, 680px);
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 12px;
+  border: 1px solid #d5e0d8;
+  border-radius: 14px;
   color: #fff;
   background: #14251b;
+  box-shadow: 0 5px 16px #132f2414;
 }
 
 .camera-frame video, .camera-frame canvas {
@@ -428,8 +443,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 .result-panel {
-  border-color: #b6d9c0;
-  background: linear-gradient(150deg, #eff9f2, #e5f3e9);
+  border-color: #d5e5d9;
+  background: linear-gradient(150deg, #fff, #f3f8f4);
 }
 .recognition-note {
   margin: 14px 0;
@@ -442,10 +457,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 .prediction {
-  min-height: 1.8em;
-  margin: 4px 0;
+  min-height: 2em;
+  margin: 12px 0;
   color: var(--green-dark);
-  font-size: clamp(1.8rem, 3vw, 2.3rem);
+  font-size: clamp(2rem, 3vw, 2.6rem);
   font-weight: 800;
   line-height: 1.15;
 }
@@ -556,13 +571,13 @@ header a { color: #fff; }
 .phrasebook-item .text-button { min-height: 30px; font-size: .76rem; }
 
 @media (max-width: 760px) {
-  header { min-height: 52px; padding: 8px 12px; }
+  header { min-height: 56px; padding: 8px 14px; }
   .header-context { display: none; }
   .brand { font-size: 1.15rem; }
   .privacy-badge { padding: 6px 9px; font-size: .68rem; }
-  .wrap { gap: 10px; margin: 8px 0; padding: 0 10px; }
-  .intro { padding: 14px; }
-  .panel { padding: 14px; }
+  .wrap { gap: 12px; margin: 16px auto; padding: 0 14px; }
+  .intro { padding: 18px; }
+  .panel { padding: 16px; }
   .recognition-workspace { grid-template-columns: 1fr; }
   .feature-cards { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -571,28 +586,17 @@ header a { color: #fff; }
   .training-controls, .classification-controls { align-items: stretch; flex-direction: column; }
   .camera-frame { min-height: 0; aspect-ratio: 16 / 9; }
   .camera-tool { min-height: 30px; padding: 4px 7px; }
-  .workflow-tabs { gap: 5px; }
-  .workflow-tabs button { flex: 1 1 calc(50% - 5px); white-space: normal; }
+  .workflow-tabs { gap: 6px; margin-bottom: 16px; }
+  .workflow-tabs button { flex: 1 1 calc(50% - 6px); white-space: normal; }
 }
 
 @media (max-width: 420px) {
   .cards { grid-template-columns: 1fr; }
   .steps { flex-direction: column; }
-}
-
-@media (min-width: 980px) {
-  .recognition { grid-template-columns: minmax(0, 1.8fr) minmax(360px, 1fr); align-items: start; }
-  .recognition > .intro { grid-column: 1 / -1; }
-  .recognition > .recognition-workspace { grid-column: 1; }
-  .recognition > .workflow-panel { grid-column: 2; grid-row: 2; }
-  .workflow-panel { max-height: calc(100vh - 180px); overflow: auto; }
-  .intro .eyebrow { display: none; }
-  h1 { font-size: clamp(1.25rem, 1.6vw, 1.5rem); }
-}
-
-@media (max-width: 979px) {
-  .recognition > .workflow-panel { grid-column: 1; }
-  .workflow-panel { max-height: none; overflow: visible; }
+  .privacy-badge { gap: 6px; font-size: .62rem; }
+  .camera-tools { top: 7px; right: 7px; gap: 4px; }
+  .camera-tool { font-size: .65rem; }
+  .phrasebook { padding: 10px; }
 }
 
 @media (min-width: 761px) {
@@ -602,12 +606,6 @@ header a { color: #fff; }
     gap: 6px;
   }
 
-  @media (max-width: 420px) {
-    .privacy-badge { gap: 6px; font-size: .62rem; }
-    .camera-tools { top: 7px; right: 7px; gap: 4px; }
-    .camera-tool { font-size: .65rem; }
-    .phrasebook { padding: 10px; }
-  }
   .camera-controls label { min-width: 0; }
   .camera-controls input, .camera-controls select,
   .camera-controls button { min-height: 36px; padding: 6px 8px; }

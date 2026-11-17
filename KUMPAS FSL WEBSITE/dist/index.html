@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KUMPAS | FSL Sign-to-Text-to-Speech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/main-9ehEPeiF.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/evaluation-_42hO7To.js">
+  <link rel="stylesheet" crossorigin href="/assets/evaluation-C7WLilqL.css">
+</head>
+<body>
+  <a class="skip-link" href="#recognitionTools">Skip to recognition tools</a>
+  <header>
+    <a class="brand" href="index.html">KUMPAS <span>FSL</span></a>
+    <p class="header-context">Filipino Sign Language · Text · Speech</p>
+    <span class="privacy-badge"><span aria-hidden="true"></span> Private on this device</span>
+  </header>
+  <main id="recognitionTools" class="wrap recognition">
+    <section class="panel intro">
+      <p class="eyebrow">FILIPINO SIGN LANGUAGE</p>
+      <h1>Sign to text and speech</h1>
+      <p>Connect your camera, show a sign, and follow the result on screen.</p>
+      <details class="system-details">
+        <summary>About this system</summary>
+        <p>Filipino Sign Language-to-Text-to-Audio System Using Mathematical Feature Extraction and Computational Classification.</p>
+      </details>
+    </section>
+
+    <div class="recognition-workspace">
+      <section class="panel camera-panel">
+        <div class="section-heading">
+          <span class="step-number" aria-hidden="true">1</span>
+          <div>
+            <h2>Connect your camera</h2>
+            <p class="help">Use a built-in, USB, or Iriun webcam. Your video is processed in this browser.</p>
+          </div>
+        </div>
+        <div class="camera-controls">
+          <label>Camera<select id="cameraDevice"><option value="">Default camera</option></select></label>
+          <label>Sign type
+            <select id="kind">
+              <option value="static">Static (hold)</option>
+              <option value="dynamic">Dynamic (move)</option>
+            </select>
+          </label>
+          <button id="connectCamera">Connect camera</button>
+          <button id="disconnectCamera" class="secondary" disabled>Disconnect</button>
+          <button id="recordVideo" class="secondary" disabled>Record sign video</button>
+        </div>
+        <div class="camera-frame" id="cameraFrame">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="landmarkCanvas"></canvas>
+          <div class="camera-tools" aria-label="Camera display tools">
+            <button id="mirrorCamera" type="button" class="camera-tool" aria-pressed="true" title="Toggle mirrored camera view">Mirror: on</button>
+            <button id="fullscreenCamera" type="button" class="camera-tool" title="Expand camera preview">Full screen</button>
+          </div>
+          <p id="cameraPlaceholder">Select “Connect camera” and allow camera access.</p>
+        </div>
+        <p id="status" class="status" role="status">Camera is not connected.</p>
+        <p id="recordingStatus" class="status" role="status">Video recording is off.</p>
+        <div class="live-stats" aria-label="Live camera status">
+          <span id="handIndicator" class="live-chip">No hand</span>
+          <span id="frameRate" class="live-chip">-- fps</span>
+          <span id="processingTime" class="live-chip">-- ms</span>
+        </div>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="section-heading">
+          <span class="step-number" aria-hidden="true">2</span>
+          <div>
+            <h2>Your sign result</h2>
+            <p class="help">Stable signs appear here and can be spoken aloud.</p>
+          </div>
+        </div>
+        <p id="prediction" class="prediction" aria-live="polite">Waiting for a sign…</p>
+        <div class="match-meter" aria-label="Recognition evidence">
+          <div><span>Recognition support</span><strong id="matchValue">--</strong></div>
+          <div class="match-track"><span id="matchBar"></span></div>
+        </div>
+        <p class="recognition-note">The built-in letter preview is limited and is not validated FSL accuracy.</p>
+        <div class="actions">
+          <button id="speak" disabled>Replay audio</button>
+          <button id="openTextTools" type="button" class="secondary">Open text tools</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel workflow-panel">
+      <div class="workflow-tabs" role="tablist" aria-label="Sign recognition workflow">
+        <button id="tab-data" type="button" class="active" data-step="data" role="tab" aria-controls="step-data" aria-selected="true">1&nbsp; Data preparation</button>
+        <button id="tab-features" type="button" data-step="features" role="tab" aria-controls="step-features" aria-selected="false">2&nbsp; Feature extraction</button>
+        <button id="tab-classification" type="button" data-step="classification" role="tab" aria-controls="step-classification" aria-selected="false">3&nbsp; Text &amp; speech</button>
+        <button id="tab-evaluation" type="button" data-step="evaluation" role="tab" aria-controls="step-evaluation" aria-selected="false">4&nbsp; Evaluation</button>
+      </div>
+
+      <section id="step-data" class="workflow-stage" role="tabpanel" aria-labelledby="tab-data">
+        <h2>Gather approved sign samples</h2>
+        <p class="help">Choose an approved sign, connect the camera, and capture varied samples. Data stays in this browser.</p>
+        <p class="notice">The built-in preview covers selected static letters only. Other signs need approved samples; J and Z need motion samples.</p>
+        <div class="training-controls">
+          <label>Sign or letter
+            <select id="label">
+              <option value="">Select a sign</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+              <option>F</option><option>G</option><option>H</option><option>I</option><option>J</option>
+              <option>K</option><option>L</option><option>M</option><option>N</option><option>O</option>
+              <option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
+              <option>U</option><option>V</option><option>W</option><option>X</option><option>Y</option><option>Z</option>
+            </select>
+          </label>
+          <label>Recording condition
+            <select id="sampleCondition">
+              <option value="Bright light">Bright light</option>
+              <option value="Indoor light">Indoor light</option>
+              <option value="Dim light">Dim light</option>
+              <option value="Different angle">Different angle</option>
+              <option value="Different distance">Different distance</option>
+            </select>
+          </label>
+          <label>Add custom approved sign
+            <input id="customSign" placeholder="Enter approved sign label">
+          </label>
+          <button type="button" id="addCustomSign" class="secondary">Add label</button>
+        </div>
+        <div class="actions">
+          <button id="captureSample" disabled>Capture one (Space)</button>
+          <button id="captureBurst" class="secondary" disabled>Capture 25 in 3 seconds</button>
+        </div>
+        <p id="captureStatus" class="status" role="status">Connect the camera before capturing samples.</p>
+        <h3>Saved samples: <span id="sampleCount">0</span></h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Type</th><th>Sign</th><th>Condition</th><th>Samples</th><th>Train</th><th>Test</th><th>Action</th></tr></thead>
+            <tbody id="sampleRows"><tr><td colspan="7">No samples saved.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="split-controls">
+          <label>Training share <span id="trainingShareValue">80%</span>
+            <input id="trainingShare" type="range" min="50" max="90" value="80">
+          </label>
+          <button id="splitSets" class="secondary">Split sets</button>
+          <button id="exportSamples" class="secondary">Export</button>
+          <button id="importSamples" class="secondary">Import</button>
+          <input id="importSamplesFile" type="file" accept="application/json,.json" hidden>
+          <button id="clearSamples" class="secondary">Clear all</button>
+        </div>
+        <p id="sampleSummary" class="status" role="status">0 samples across 0 signs. Training 0, testing 0.</p>
+      </section>
+
+      <section id="step-features" class="workflow-stage" role="tabpanel" aria-labelledby="tab-features" hidden>
+        <h2>Mathematical feature extraction</h2>
+        <p class="help">Live measurements from MediaPipe landmarks. The normalized classifier vector is padded for up to two hands; it is not a 62-feature vector.</p>
+        <div class="cards feature-cards">
+          <article><small>Hand scale (wrist to middle MCP)</small><b id="featureScale">—</b></article>
+          <article><small>Hand centroid (x, y, z)</small><b id="featureCentroid">—</b></article>
+          <article><small>Feature vector length</small><b id="featureLength">126</b></article>
+        </div>
+        <h3>3D fingertip-to-wrist / base-to-wrist distance ratio</h3>
+        <div class="feature-list">
+          <div><span>Thumb</span><progress id="ratio0" max="2" value="0"></progress><b id="ratioValue0">—</b></div>
+          <div><span>Index</span><progress id="ratio1" max="2" value="0"></progress><b id="ratioValue1">—</b></div>
+          <div><span>Middle</span><progress id="ratio2" max="2" value="0"></progress><b id="ratioValue2">—</b></div>
+          <div><span>Ring</span><progress id="ratio3" max="2" value="0"></progress><b id="ratioValue3">—</b></div>
+          <div><span>Pinky</span><progress id="ratio4" max="2" value="0"></progress><b id="ratioValue4">—</b></div>
+        </div>
+        <h3>Joint flexion angle</h3>
+        <div class="feature-list">
+          <div><span>Thumb</span><progress id="angle0" max="180" value="0"></progress><b id="angleValue0">—</b></div>
+          <div><span>Index</span><progress id="angle1" max="180" value="0"></progress><b id="angleValue1">—</b></div>
+          <div><span>Middle</span><progress id="angle2" max="180" value="0"></progress><b id="angleValue2">—</b></div>
+          <div><span>Ring</span><progress id="angle3" max="180" value="0"></progress><b id="angleValue3">—</b></div>
+          <div><span>Pinky</span><progress id="angle4" max="180" value="0"></progress><b id="angleValue4">—</b></div>
+        </div>
+      </section>
+
+      <section id="step-classification" class="workflow-stage" role="tabpanel" aria-labelledby="tab-classification" hidden>
+        <h2>Build your translation</h2>
+        <p class="help">Recognized signs can be added to your text and spoken aloud. Adjust recognition and voice settings below.</p>
+        <div class="classification-controls">
+          <label>Classifier
+            <select id="classifierType">
+              <option value="knn">Trained KNN (k = 3)</option>
+              <option value="preview">Limited geometric letter preview</option>
+            </select>
+          </label>
+          <button id="trainModel">Train model</button>
+          <span id="trainingStatus" class="status" role="status">KNN uses saved training samples; no FSL model is bundled.</span>
+          <label>Hold time <output id="holdTimeValue">900 ms</output>
+            <input id="holdTime" type="range" min="0" max="1500" step="100" value="900">
+          </label>
+          <label>Voice language
+            <select id="voiceLanguage"><option value="fil-PH">Filipino</option><option value="en-US">English</option></select>
+          </label>
+          <label class="check-control"><input id="addToText" type="checkbox" checked> Add stable signs to text</label>
+          <label class="check-control"><input id="speakEachSign" type="checkbox" checked> Speak each stable sign</label>
+        </div>
+        <label>Translation output<textarea id="translationOutput" rows="4" placeholder="Recognized signs appear here..."></textarea></label>
+        <p id="translationStatus" class="status" role="status">Ready for recognized signs.</p>
+        <div class="actions">
+          <button id="appendCurrentSign" class="secondary">Add current sign</button>
+          <button id="appendSpace" class="secondary">Space</button>
+          <button id="deleteLastCharacter" class="secondary">Backspace</button>
+          <button id="speakTranslation">Speak text</button>
+          <button id="clearTranslation" class="secondary">Clear</button>
+        </div>
+        <div class="actions utility-actions" aria-label="Translation utilities">
+          <button id="copyTranslation" class="secondary">Copy text</button>
+          <button id="downloadTranslation" class="secondary">Download text</button>
+          <button id="savePhrase" class="secondary">Save to phrasebook</button>
+        </div>
+        <section class="phrasebook" aria-labelledby="phrasebookHeading">
+          <div class="phrasebook-heading">
+            <div>
+              <h3 id="phrasebookHeading">My phrasebook</h3>
+              <p class="help">Keep up to 8 useful phrases on this device.</p>
+            </div>
+            <span class="local-only-label">Saved locally</span>
+          </div>
+          <p id="phrasebookStatus" class="status" role="status">No saved phrases yet.</p>
+          <div id="phrasebookList" class="phrasebook-list" role="list" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section id="step-evaluation" class="workflow-stage" role="tabpanel" aria-labelledby="tab-evaluation" hidden>
+        <h2>Evaluation and testing</h2>
+        <p class="help">Run KNN on held-out samples that were excluded from training. This sample-level split is a prototype check, not a participant-independent research evaluation.</p>
+        <button id="runModelTest">Run test</button>
+        <div id="modelTestResults" class="notice" role="status">No held-out test has been run.</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Expected</th><th>Predicted</th><th>Result</th></tr></thead>
+            <tbody id="modelTestRows"><tr><td colspan="3">No test results.</td></tr></tbody>
+          </table>
+        </div>
+        <details class="research-panel">
+          <summary>Research evaluation (optional)</summary>
+          <p class="help">Timed evaluations use trained KNN only; geometric preview results are excluded.</p>
+          <div class="recognition-controls">
+            <label>Expected sign label<input id="expected" placeholder="Correct label for this test"></label>
+            <label>Was the spoken result correct?
+              <select id="audioAssessment"><option value="na">Not assessed</option><option value="yes">Yes</option><option value="no">No</option></select>
+            </label>
+            <label>Landmark accuracy % (dynamic only; compare with independently annotated references)
+              <input id="landmarkAssessment" type="number" min="0" max="100" step="any" placeholder="Leave blank if not independently measured">
+            </label>
+            <button id="startTest" disabled>Start timed test</button>
+            <button id="finishTest" disabled>Finish and save</button>
+          </div>
+          <p id="testStatus" class="status" role="status">No test in progress.</p>
+          <a href="evaluation.html">Open the eight-metric dashboard</a>
+        </details>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

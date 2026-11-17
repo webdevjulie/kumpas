@@ -5,7 +5,9 @@ import {
 import { openCamera, stopCamera, listCameras } from './camera.js';
 import { describeHandFeatures, extractHandFeatures } from './featureExtraction.js';
 import { createHandLandmarker, detectHands, drawLandmarks } from './handTracking.js';
-import { extractTemporalFeatures } from './dynamicRecognition.js';
+import {
+  classifyDynamicLetter, extractTemporalFeatures, TEMPORAL_STEPS
+} from './dynamicRecognition.js';
 import { classifyStaticLetter } from './staticAlphabet.js';
 import { recordDynamicAttempt, recordStaticAttempt } from './evaluation.js';
 import { deleteSavedPhrase, loadSavedPhrases, savePhrase } from './phrasebook.js';
@@ -33,6 +35,8 @@ let animationFrame = 0;
 let latestFeatures = null;
 let latestDynamicFeatures = null;
 let sequence = [];
+let motionSequence = [];
+let latestMotionPoint = null;
 let lastFrameAt = 0;
 let lastClassificationAt = 0;
 let lastFpsTimestamp = 0;
@@ -160,6 +164,16 @@ function renderFeatureSummary(hands) {
   }
 }
 
+function getHandMotionPoint(hands) {
+  const count = hands.length;
+  const x = hands.reduce((sum, hand) => sum + hand[0].x, 0) / count;
+  const y = hands.reduce((sum, hand) => sum + hand[0].y, 0) / count;
+  const palmScale = hands.reduce((sum, hand) =>
+    sum + Math.hypot(hand[9].x - hand[0].x, hand[9].y - hand[0].y), 0
+  ) / count;
+  return [x, y, palmScale];
+}
+
 async function refreshCameras(selectedId) {
   const cameras = await listCameras();
   const previous = selectedId ?? cameraSelect.value;
@@ -212,6 +226,9 @@ async function stopCameraConnection() {
   lastSpokenPrediction = '';
   latestFeatures = null;
   latestDynamicFeatures = null;
+  sequence = [];
+  motionSequence = [];
+  latestMotionPoint = null;
   lastFpsTimestamp = 0;
   frameIntervals.length = 0;
   byId('handIndicator').textContent = 'No hand';
@@ -257,6 +274,8 @@ async function connectCamera() {
     lastFrameAt = 0;
     lastClassificationAt = 0;
     sequence = [];
+    motionSequence = [];
+    latestMotionPoint = null;
     setStatus('Ready! Show one or two hands to the camera.');
     animationFrame = requestAnimationFrame(trackFrame);
   } catch (error) {
@@ -279,9 +298,9 @@ function updateTestAvailability() {
 
 function currentSampleFeatures(kind) {
   if (kind === 'static') return latestFeatures;
-  return sequence.length >= 3
-    ? extractTemporalFeatures(sequence)
-    : latestDynamicFeatures;
+  return sequence.length === TEMPORAL_STEPS
+    ? extractTemporalFeatures(sequence, motionSequence)
+    : null;
 }
 
 function saveCurrentSample() {
@@ -292,7 +311,7 @@ function saveCurrentSample() {
   if (!features) {
     throw new Error(kind === 'static'
       ? 'No hand detected. Hold your hand in front of the camera.'
-      : 'Show the moving sign for a moment before saving a sample.');
+      : 'Keep the full moving sign visible for about one second before capturing a sample.');
   }
   const total = addSample(kind, labelInput.value, features, {
     condition: byId('sampleCondition').value
@@ -452,6 +471,10 @@ function classifyCurrent(features, kind, elapsedMs, landmarks) {
   const trainable = hasTrainableSamples(kind);
   const previewOnly = byId('classifierType').value === 'preview';
   let result = previewOnly ? null : classify(kind, features);
+  if (kind === 'dynamic' && (previewOnly || !trainable)) {
+    const letter = classifyDynamicLetter(features);
+    if (letter) result = { ...letter, source: 'letter preview' };
+  }
   if (kind === 'static' && (previewOnly || (!result && !trainable))) {
     const letter = classifyStaticLetter(landmarks);
     if (letter) result = { ...letter, source: 'letter preview' };
@@ -464,13 +487,15 @@ function classifyCurrent(features, kind, elapsedMs, landmarks) {
     testSession.kind = kind;
   }
   if (!result) {
-    prediction.textContent = previewOnly && kind === 'dynamic'
-      ? 'The geometric preview supports static letters only. Select Trained KNN for moving signs.'
-      : trainable
+    prediction.textContent = kind === 'dynamic' && !trainable
+      ? 'No J or Z motion detected. Trace the full sign path, or add samples for another dynamic sign.'
+      : previewOnly && kind === 'dynamic'
+        ? 'The built-in motion preview supports J and Z only. Select Trained KNN for other moving signs.'
+        : trainable
         ? 'No clear KNN majority. Hold the sign steadily or add more varied samples.'
         : kind === 'static'
           ? 'No supported static letter detected. Add approved samples for this sign.'
-          : 'No trained dynamic signs yet. Record a clip or add approved samples.';
+          : 'No matching dynamic sign. Add more varied samples and try again.';
     currentPrediction = '';
     pendingPrediction = '';
     pendingPredictionCount = 0;
@@ -492,8 +517,9 @@ function classifyCurrent(features, kind, elapsedMs, landmarks) {
     byId('speak').disabled = true;
   }
 
-  if (pendingPredictionCount < 2
-    || performance.now() - pendingPredictionSince < Number(byId('holdTime').value)) return;
+  const isDynamicPreview = kind === 'dynamic' && result.source === 'letter preview';
+  if (!isDynamicPreview && (pendingPredictionCount < 2
+    || performance.now() - pendingPredictionSince < Number(byId('holdTime').value))) return;
 
   currentPrediction = result.label;
   if (testSession) testSession.finalPrediction = result.label;
@@ -557,6 +583,8 @@ function trackFrame(timestamp) {
       latestFeatures = null;
       latestDynamicFeatures = null;
       sequence = [];
+      motionSequence = [];
+      latestMotionPoint = null;
       renderFeatureSummary([]);
       if (timestamp - lastFrameAt > 1200) {
         pendingPrediction = '';
@@ -577,23 +605,28 @@ function trackFrame(timestamp) {
       byId('handIndicator').classList.add('active');
       renderFeatureSummary(hands);
       const features = extractHandFeatures(hands);
+      latestMotionPoint = getHandMotionPoint(hands);
       latestFeatures = features;
       if (timestamp - lastFrameAt >= 80) {
         sequence.push(features);
+        motionSequence.push(latestMotionPoint);
+        if (sequence.length > TEMPORAL_STEPS) {
+          sequence.shift();
+          motionSequence.shift();
+        }
         lastFrameAt = timestamp;
       }
 
       const mode = modeSelect.value;
-      const interval = mode === 'static' ? 350 : 1500;
+      const interval = 350;
       if (timestamp - lastClassificationAt >= interval) {
         lastClassificationAt = timestamp;
         if (mode === 'static') {
           classifyCurrent(features, mode, performance.now() - started, hands[0]);
-        } else if (sequence.length >= 3) {
+        } else if (sequence.length === TEMPORAL_STEPS) {
           const dynamicStarted = performance.now();
-          latestDynamicFeatures = extractTemporalFeatures(sequence);
+          latestDynamicFeatures = extractTemporalFeatures(sequence, motionSequence);
           classifyCurrent(latestDynamicFeatures, mode, performance.now() - dynamicStarted);
-          sequence = [features];
         }
       }
       setStatus('Hand detected. Show a sign to recognize it.');
@@ -756,6 +789,8 @@ cameraSelect.addEventListener('focus', () => {
 });
 modeSelect.addEventListener('change', () => {
   sequence = [];
+  motionSequence = [];
+  latestMotionPoint = null;
   latestDynamicFeatures = null;
   pendingPrediction = '';
   pendingPredictionCount = 0;
@@ -1047,6 +1082,7 @@ byId('startTest').addEventListener('click', () => {
     finalPrediction: ''
   };
   sequence = [];
+  motionSequence = [];
   lastClassificationAt = testSession.startedAt;
   byId('testStatus').textContent = 'Timed test in progress…';
   modeSelect.disabled = true;

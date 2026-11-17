@@ -9,7 +9,7 @@
 - Palm-scale-normalized features for up to two hands and static/dynamic KNN recognition.
 - Four-step workflow for collecting samples, inspecting live mathematical features, classifying signs, and testing held-out samples.
 - Single or timed 25-frame sample capture, condition tags, per-label train/test splits, and JSON sample import/export.
-- Limited built-in static-letter preview when no trainable static KNN samples are available.
+- Limited built-in static-letter and J/Z motion preview when matching KNN samples are unavailable.
 - Webcam video recording with a local video download while recognition continues.
 - Composable text output, configurable hold time, and Filipino/English speech playback.
 - Mirrored or full-screen camera preview, quick copy and text download, and an eight-item phrasebook stored locally in the browser.
@@ -29,9 +29,11 @@ MediaPipe's JavaScript and WASM runtime are bundled with the app. The hand model
 
 The GitHub Actions workflow builds and deploys this Vite app whenever changes are pushed to `main`. In the repository settings, open **Pages** and set **Build and deployment → Source** to **GitHub Actions**. The project site is [https://webdevjulie.github.io/kumpas/](https://webdevjulie.github.io/kumpas/). Use that HTTPS URL, allow camera access, and keep an internet connection for the first hand-model download.
 
+For a local shareable copy, run `npm run build`, then include the `dist` folder, `START KUMPAS.bat`, and `serve-local.js` together. Extract them into one folder and run the batch file; it serves the app at `http://127.0.0.1:8000/`. Node.js and internet access for the initial hand-model download are required.
+
 ## Train recognition
 
-The built-in letter preview estimates selected static letters (A, B, C, D, F, I, L, O, U, V, W, and Y); it is a geometric heuristic, not validated FSL accuracy. The data-preparation panel offers A–Z labels and custom approved labels. Other letters, including moving letters such as J and Z, and other signs need at least three varied, validated examples per sign label. KNN uses k = 3 and Euclidean distance; only training samples are used, and a label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. Labels are filled automatically and spoken after the same result remains stable for the configured hold time; users do not need to type while signing. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
+The built-in geometric preview estimates selected static letters (A, B, C, D, F, I, L, O, U, V, W, and Y) and simple J/Z motion. It is not validated FSL accuracy. Other moving signs need at least three varied, validated examples per sign label. KNN uses k = 3 and Euclidean distance; only training samples are used, and a label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. Labels are filled automatically and spoken after the same result remains stable for the configured hold time; users do not need to type while signing. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence that includes wrist motion. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
 
 Samples are saved in this browser's `localStorage` and can be exported/imported as JSON. The split tool assigns held-out samples by label, but this sample-level split can leak near-duplicate frames and is not a participant-independent research split. Add varied representative samples for each validated label. Clearing browser site data removes them. The prototype does not synchronize data.
 
