@@ -33,7 +33,7 @@
           <span class="step-number" aria-hidden="true">1</span>
           <div>
             <h2>Connect your camera</h2>
-            <p class="help">Use any camera available to this browser: phone, laptop, USB, or virtual webcam. For a phone on another device, use a webcam bridge such as Iriun.</p>
+            <p class="help">On a phone, open KUMPAS directly at its HTTPS address and allow camera access. An HTTP address using your computer's IP blocks phone-camera access. To use your phone as a webcam on a computer, use a webcam bridge such as Iriun.</p>
           </div>
         </div>
         <div class="camera-controls">
@@ -99,7 +99,7 @@
       <section id="step-data" class="workflow-stage" role="tabpanel" aria-labelledby="tab-data">
         <h2>Gather approved sign samples</h2>
         <p class="help">Choose an FSL sign or alphabet letter, connect the camera, and capture varied, correctly labeled examples. Samples stay on this device.</p>
-        <p class="notice">Without trained samples, the app uses a bundled pretrained ASL-based model for static A–Z handshapes and motion rules for J/Z. The model runs locally and recognizes alphabet handshapes only; it is not a full FSL vocabulary model. For other signs, capture at least 3 varied, FSL-validated examples per label, then use Trained KNN. The pretrained model is CC BY-NC 4.0; see its attribution and license in the models folder.</p>
+        <p class="notice">The common-sign names below are labels, not built-in trained examples. The bundled pretrained model recognizes static A–Z handshapes only; it does not recognize common FSL words. Common signs default to Dynamic mode; verify the correct sign type against an FSL reference, then capture at least 3 separate, correctly labeled performances per sign and use Trained KNN. Use Capture one once per separate static attempt; adjacent video frames from one held pose are not independent examples. Static letters use Static mode, except J/Z. The model runs locally and is licensed CC BY-NC 4.0; see its attribution and license in the models folder.</p>
         <div class="training-controls">
           <label>Sign or letter
             <select id="label">
@@ -127,7 +127,7 @@
         </div>
         <div class="actions">
           <button id="captureSample" disabled>Capture one (Space)</button>
-          <button id="captureBurst" class="secondary" disabled>Capture 25 static samples</button>
+          <button id="captureBurst" class="secondary" disabled hidden>Capture 3 dynamic samples</button>
         </div>
         <p id="captureStatus" class="status" role="status">Connect the camera before capturing samples.</p>
         <h3>Saved samples: <span id="sampleCount">0</span></h3>

@@ -11,6 +11,7 @@ import {
 import { classifyAslAlphabet, loadAslAlphabetModel } from './aslAlphabetClassifier.js';
 import { recordDynamicAttempt, recordStaticAttempt } from './evaluation.js';
 import { deleteSavedPhrase, loadSavedPhrases, savePhrase } from './phrasebook.js';
+import { COMMON_FSL_SIGNS, getDefaultSignType } from './signLabels.js';
 import { speakText } from './speechOutput.js';
 import { renderTextOutput } from './textOutput.js';
 
@@ -30,6 +31,7 @@ const expectedInput = byId('expected');
 const recordVideoButton = byId('recordVideo');
 
 let stream = null;
+let cameraConnectionPending = false;
 let landmarker = null;
 let animationFrame = 0;
 let latestFeatures = null;
@@ -121,15 +123,25 @@ function updateSamples() {
   }
 
   const savedLabels = [...new Set(samples.map(sample => sample.label))]
-    .filter(label => !/^[A-Z]$/.test(label))
+    .filter(label => !/^[A-Z]$/.test(label) && !COMMON_FSL_SIGNS.includes(label))
     .sort((a, b) => a.localeCompare(b));
   const selectedLabel = labelInput.value;
   const letterOptions = Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index));
-  labelInput.replaceChildren(new Option('Select a sign', ''));
-  for (const label of [...letterOptions, ...savedLabels]) {
-    labelInput.add(new Option(label, label));
+  const createOptionGroup = (name, labels) => {
+    const group = document.createElement('optgroup');
+    group.label = name;
+    labels.forEach(label => group.append(new Option(label, label)));
+    return group;
+  };
+  labelInput.replaceChildren(
+    new Option('Select a sign', ''),
+    createOptionGroup('Common signs', COMMON_FSL_SIGNS),
+    createOptionGroup('Alphabet', letterOptions),
+    ...(savedLabels.length ? [createOptionGroup('Saved custom signs', savedLabels)] : [])
+  );
+  if ([...COMMON_FSL_SIGNS, ...letterOptions, ...savedLabels].includes(selectedLabel)) {
+    labelInput.value = selectedLabel;
   }
-  if ([...letterOptions, ...savedLabels].includes(selectedLabel)) labelInput.value = selectedLabel;
 
   const training = samples.filter(sample => sample.split !== 'test').length;
   const testing = samples.filter(sample => sample.split === 'test').length;
@@ -288,8 +300,11 @@ async function stopCameraConnection() {
 }
 
 async function connectCamera() {
+  if (cameraConnectionPending) return;
+  cameraConnectionPending = true;
   try {
-    await stopCameraConnection();
+    if (stream) await stopCameraConnection();
+    byId('connectCamera').disabled = true;
     setStatus('Requesting camera permission…');
     stream = await openCamera(cameraSelect.value);
     video.srcObject = stream;
@@ -321,12 +336,19 @@ async function connectCamera() {
   } catch (error) {
     await stopCameraConnection();
     if (error?.name === 'NotAllowedError') {
-      showError(new Error('Camera permission was denied. Allow camera access in your browser and try again.'));
+      showError(new Error('Camera permission was denied. Allow camera access in your browser and phone settings, then try again.'));
     } else if (error?.name === 'NotFoundError') {
       showError(new Error('No available camera found. Connect or enable a camera, then refresh the camera list.'));
+    } else if (error?.name === 'NotReadableError') {
+      showError(new Error('The camera is already in use or unavailable. Close other camera apps and try again.'));
+    } else if (error?.name === 'SecurityError') {
+      showError(new Error('Camera access is blocked on this page. Open KUMPAS using its HTTPS address on your phone.'));
     } else {
       showError(error);
     }
+  } finally {
+    cameraConnectionPending = false;
+    if (!stream) byId('connectCamera').disabled = false;
   }
 }
 
@@ -371,23 +393,22 @@ function stopBurstCapture(message) {
 function startBurstCapture() {
   if (!stream) throw new Error('Connect a camera before capturing samples.');
   if (!labelInput.value) throw new Error('Choose an approved sign label first.');
+  if (modeSelect.value !== 'dynamic') {
+    throw new Error('Use Capture one for each static example. Burst capture is for complete dynamic signs.');
+  }
   if (captureInterval) return;
 
   const kind = modeSelect.value;
   const label = labelInput.value;
-  const isDynamic = kind === 'dynamic';
-  const sampleLimit = isDynamic ? 3 : 25;
-  const sampleInterval = isDynamic ? 100 : 120;
+  const sampleLimit = 3;
+  const sampleInterval = 100;
   captureCount = 0;
-  captureTarget = performance.now() + (isDynamic ? 10000 : 3000);
-  if (isDynamic) {
-    sequence = [];
-    motionSequence = [];
-  }
+  captureTarget = performance.now() + 10000;
+  sequence = [];
+  motionSequence = [];
   byId('captureBurst').disabled = true;
-  byId('captureStatus').textContent = isDynamic
-    ? 'Capturing up to 3 dynamic samples. Repeat the complete sign once per sample.'
-    : 'Capturing up to 25 static samples. Keep the sign visible and vary it slightly.';
+  byId('captureStatus').textContent =
+    'Capturing up to 3 dynamic samples. Repeat the complete sign once per sample.';
   const capture = () => {
     if (!stream) {
       stopBurstCapture('Capture stopped because the camera was disconnected.');
@@ -398,9 +419,9 @@ function startBurstCapture() {
       return;
     }
     if (performance.now() >= captureTarget || captureCount >= sampleLimit) {
-      stopBurstCapture(isDynamic && captureCount < sampleLimit
+      stopBurstCapture(captureCount < sampleLimit
         ? `Captured ${captureCount} of ${sampleLimit} samples. Repeat each complete sign with your hand visible.`
-        : `Captured ${captureCount} of ${sampleLimit} ${kind} samples.`);
+        : `Captured ${captureCount} ${kind} samples.`);
       updateSamples();
       updateTestAvailability();
       return;
@@ -410,13 +431,11 @@ function startBurstCapture() {
       saveCurrentSample();
       captureCount += 1;
       byId('captureStatus').textContent = `Capturing samples: ${captureCount}/${sampleLimit}`;
-      if (isDynamic) {
-        sequence = [];
-        motionSequence = [];
-        if (captureCount < sampleLimit) {
-          byId('captureStatus').textContent =
-            `Saved ${captureCount}/${sampleLimit}. Repeat the complete sign for the next sample.`;
-        }
+      sequence = [];
+      motionSequence = [];
+      if (captureCount < sampleLimit) {
+        byId('captureStatus').textContent =
+          `Saved ${captureCount}/${sampleLimit}. Repeat the complete sign for the next sample.`;
       }
       if (captureCount >= sampleLimit) {
         stopBurstCapture(`Captured ${captureCount} ${kind} samples.`);
@@ -881,9 +900,7 @@ navigator.mediaDevices?.addEventListener?.('devicechange', () => {
   refreshCameras(activeDeviceId).catch(showError);
 });
 modeSelect.addEventListener('change', () => {
-  byId('captureBurst').textContent = modeSelect.value === 'dynamic'
-    ? 'Capture 3 dynamic samples'
-    : 'Capture 25 static samples';
+  byId('captureBurst').hidden = modeSelect.value !== 'dynamic';
   sequence = [];
   motionSequence = [];
   latestMotionPoint = null;
@@ -923,7 +940,7 @@ byId('captureBurst').addEventListener('click', () => {
 });
 
 labelInput.addEventListener('change', () => {
-  modeSelect.value = ['J', 'Z'].includes(labelInput.value) ? 'dynamic' : 'static';
+  modeSelect.value = getDefaultSignType(labelInput.value);
   modeSelect.dispatchEvent(new Event('change'));
 });
 
