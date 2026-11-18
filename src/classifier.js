@@ -1,3 +1,5 @@
+import { TEMPORAL_STEPS } from './dynamicRecognition.js';
+
 const KEY = 'kumpas_knn_training_v1';
 const K = 3;
 const MIN_SAMPLES_PER_LABEL = 3;
@@ -113,7 +115,44 @@ export function hasTrainableSamples(kind) {
     && [...counts.values()].every(count => count >= MIN_SAMPLES_PER_LABEL);
 }
 
-function classifyFromSamples(samples, features) {
+function temporalDistance(first, second) {
+  const frameSize = first.length / TEMPORAL_STEPS;
+  if (!Number.isInteger(frameSize) || second.length !== first.length) return Infinity;
+
+  const costs = Array(TEMPORAL_STEPS + 1).fill(null);
+  costs[0] = { total: 0, length: 0 };
+  for (let firstStep = 1; firstStep <= TEMPORAL_STEPS; firstStep += 1) {
+    const current = Array(TEMPORAL_STEPS + 1).fill(null);
+    for (let secondStep = 1; secondStep <= TEMPORAL_STEPS; secondStep += 1) {
+      let frameCost = 0;
+      const firstOffset = (firstStep - 1) * frameSize;
+      const secondOffset = (secondStep - 1) * frameSize;
+      for (let feature = 0; feature < frameSize; feature += 1) {
+        const difference = first[firstOffset + feature] - second[secondOffset + feature];
+        frameCost += difference * difference;
+      }
+      frameCost = Math.sqrt(frameCost / frameSize);
+
+      const previous = [
+        costs[secondStep],
+        current[secondStep - 1],
+        costs[secondStep - 1]
+      ].filter(Boolean).sort((a, b) => a.total - b.total)[0];
+      if (previous) {
+        current[secondStep] = {
+          total: previous.total + frameCost,
+          length: previous.length + 1
+        };
+      }
+    }
+    costs.splice(0, costs.length, ...current);
+  }
+
+  const result = costs[TEMPORAL_STEPS];
+  return result ? result.total / result.length : Infinity;
+}
+
+function classifyFromSamples(samples, features, kind) {
   const compatibleSamples = samples.filter(sample => sample.features.length === features.length);
   const counts = new Map();
   for (const sample of compatibleSamples) {
@@ -124,11 +163,14 @@ function classifyFromSamples(samples, features) {
   const nearest = compatibleSamples
     .map(sample => ({
       label: sample.label,
-      distance: Math.sqrt(sample.features.reduce((sum, value, index) => {
-        const difference = value - features[index];
-        return sum + difference * difference;
-      }, 0))
+      distance: kind === 'dynamic'
+        ? temporalDistance(sample.features, features)
+        : Math.sqrt(sample.features.reduce((sum, value, index) => {
+          const difference = value - features[index];
+          return sum + difference * difference;
+        }, 0))
     }))
+    .filter(sample => Number.isFinite(sample.distance))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, K);
   if (nearest.length < K) return null;
@@ -156,7 +198,7 @@ export function classify(kind, features) {
   const trainingSamples = getSamples().filter(sample =>
     sample.kind === kind && sample.split !== 'test'
   );
-  return classifyFromSamples(trainingSamples, features);
+  return classifyFromSamples(trainingSamples, features, kind);
 }
 
 export function evaluateHeldOutSamples(kind = null) {
@@ -170,7 +212,8 @@ export function evaluateHeldOutSamples(kind = null) {
   const predictions = testingSamples.map(sample => {
     const result = classifyFromSamples(
       trainingSamples.filter(trainingSample => trainingSample.kind === sample.kind),
-      sample.features
+      sample.features,
+      sample.kind
     );
     return {
       expected: sample.label,

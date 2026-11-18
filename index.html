@@ -80,7 +80,7 @@
           <div><span>Recognition support</span><strong id="matchValue">--</strong></div>
           <div class="match-track"><span id="matchBar"></span></div>
         </div>
-        <p class="recognition-note">The built-in preview supports selected static letters and simple J/Z motion. It is a geometric heuristic, not validated FSL accuracy.</p>
+        <p class="recognition-note">The built-in preview supports selected static letters and simple J/Z motion only. Other signs need validated training samples; no complete FSL model is bundled.</p>
         <div class="actions">
           <button id="speak" disabled>Replay audio</button>
           <button id="openTextTools" type="button" class="secondary">Open text tools</button>
@@ -99,7 +99,7 @@
       <section id="step-data" class="workflow-stage" role="tabpanel" aria-labelledby="tab-data">
         <h2>Gather approved sign samples</h2>
         <p class="help">Choose an approved sign, connect the camera, and capture varied samples. Data stays in this browser.</p>
-        <p class="notice">The built-in preview supports simple J/Z motion. For other dynamic signs, select Dynamic, capture at least 3 varied examples per sign while moving through its full path, then use Trained KNN. Re-capture dynamic samples saved before this update.</p>
+        <p class="notice">The built-in preview supports simple J/Z motion only. For other dynamic signs, select Dynamic, capture at least 3 varied examples per sign through its full path, then use Trained KNN. Dynamic KNN aligns movement at different speeds. Use FSL-validated samples; no complete FSL model is bundled.</p>
         <div class="training-controls">
           <label>Sign or letter
             <select id="label">
@@ -127,7 +127,7 @@
         </div>
         <div class="actions">
           <button id="captureSample" disabled>Capture one (Space)</button>
-          <button id="captureBurst" class="secondary" disabled>Capture 25 in 3 seconds</button>
+          <button id="captureBurst" class="secondary" disabled>Capture 25 static samples</button>
         </div>
         <p id="captureStatus" class="status" role="status">Connect the camera before capturing samples.</p>
         <h3>Saved samples: <span id="sampleCount">0</span></h3>
@@ -182,7 +182,7 @@
         <div class="classification-controls">
           <label>Classifier
             <select id="classifierType">
-              <option value="knn">Trained KNN (k = 3)</option>
+              <option value="knn">Trained KNN (k = 3; speed-aligned for dynamic)</option>
               <option value="preview">Limited static &amp; J/Z motion preview</option>
             </select>
           </label>

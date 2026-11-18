@@ -339,17 +339,27 @@ function startBurstCapture() {
   if (!labelInput.value) throw new Error('Choose an approved sign label first.');
   if (captureInterval) return;
 
+  const kind = modeSelect.value;
+  const isDynamic = kind === 'dynamic';
+  const sampleLimit = isDynamic ? 3 : 25;
+  const sampleInterval = isDynamic ? 1000 : 120;
   captureCount = 0;
-  captureTarget = performance.now() + 3000;
+  captureTarget = performance.now() + (isDynamic ? 4000 : 3000);
+  if (isDynamic) {
+    sequence = [];
+    motionSequence = [];
+  }
   byId('captureBurst').disabled = true;
-  byId('captureStatus').textContent = 'Capturing up to 25 samples. Keep the sign visible and vary it slightly.';
+  byId('captureStatus').textContent = isDynamic
+    ? 'Capturing up to 3 dynamic samples. Repeat the complete sign once per sample.'
+    : 'Capturing up to 25 static samples. Keep the sign visible and vary it slightly.';
   const capture = () => {
     if (!stream) {
       stopBurstCapture('Capture stopped because the camera was disconnected.');
       return;
     }
-    if (performance.now() >= captureTarget || captureCount >= 25) {
-      stopBurstCapture(`Captured ${captureCount} of 25 samples in 3 seconds.`);
+    if (performance.now() >= captureTarget || captureCount >= sampleLimit) {
+      stopBurstCapture(`Captured ${captureCount} of ${sampleLimit} ${kind} samples.`);
       updateSamples();
       updateTestAvailability();
       return;
@@ -358,16 +368,16 @@ function startBurstCapture() {
     try {
       saveCurrentSample();
       captureCount += 1;
-      byId('captureStatus').textContent = `Capturing samples: ${captureCount}/25`;
-      if (captureCount >= 25) {
-        stopBurstCapture('Captured 25 samples.');
+      byId('captureStatus').textContent = `Capturing samples: ${captureCount}/${sampleLimit}`;
+      if (captureCount >= sampleLimit) {
+        stopBurstCapture(`Captured ${captureCount} ${kind} samples.`);
       }
     } catch (error) {
       stopBurstCapture(error.message);
     }
   };
   capture();
-  captureInterval = window.setInterval(capture, 120);
+  captureInterval = window.setInterval(capture, sampleInterval);
 }
 
 function addToTranslation(label) {
@@ -804,6 +814,9 @@ navigator.mediaDevices?.addEventListener?.('devicechange', () => {
   refreshCameras(activeDeviceId).catch(showError);
 });
 modeSelect.addEventListener('change', () => {
+  byId('captureBurst').textContent = modeSelect.value === 'dynamic'
+    ? 'Capture 3 dynamic samples'
+    : 'Capture 25 static samples';
   sequence = [];
   motionSequence = [];
   latestMotionPoint = null;

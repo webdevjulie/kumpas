@@ -8,7 +8,7 @@
 - Camera device selection for any browser-visible phone, laptop, USB, or virtual camera.
 - Palm-scale-normalized features for up to two hands and static/dynamic KNN recognition.
 - Four-step workflow for collecting samples, inspecting live mathematical features, classifying signs, and testing held-out samples.
-- Single or timed 25-frame sample capture, condition tags, per-label train/test splits, and JSON sample import/export.
+- Single or timed sample capture (static bursts or spaced dynamic sequences), condition tags, per-label train/test splits, and JSON sample import/export.
 - Limited built-in static-letter and J/Z motion preview when matching KNN samples are unavailable.
 - Webcam video recording with a local video download while recognition continues.
 - Composable text output, configurable hold time, and Filipino/English speech playback.
@@ -33,7 +33,7 @@ For a local shareable copy, run `npm run build`, then include the `dist` folder,
 
 ## Train recognition
 
-The built-in geometric preview estimates selected static letters (A, B, C, D, F, I, L, O, U, V, W, and Y) and simple J/Z motion. It is not validated FSL accuracy. Other moving signs need at least three varied, validated examples per sign label. KNN uses k = 3 and Euclidean distance; only training samples are used, and a label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. Labels are filled automatically and spoken after the same result remains stable for the configured hold time; users do not need to type while signing. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence that includes wrist motion. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
+The built-in geometric preview estimates selected static letters (A, B, C, D, F, I, L, O, U, V, W, and Y) and simple J/Z motion. It is not validated FSL accuracy, and no complete FSL model or sample dataset is bundled. Other signs need at least three varied, FSL-validated examples per sign label. KNN uses k = 3 and Euclidean distance for static signs; dynamic signs use frame-based dynamic time warping to better align examples performed at different speeds. Only training samples are used, and a label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. Labels are filled automatically and spoken after the same result remains stable for the configured hold time; users do not need to type while signing. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence that includes wrist motion. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
 
 Samples are saved in this browser's `localStorage` and can be exported/imported as JSON. The split tool assigns held-out samples by label, but this sample-level split can leak near-duplicate frames and is not a participant-independent research split. Add varied representative samples for each validated label. Clearing browser site data removes them. The prototype does not synchronize data.
 

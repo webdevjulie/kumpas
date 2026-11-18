@@ -95,3 +95,17 @@ test('never uses held-out test samples as KNN neighbors', () => {
 
   assert.equal(classify('static', [10]).label, 'B');
 });
+
+test('aligns dynamic KNN samples when the same sign is performed at a different speed', () => {
+  const signA = [0, 0, 1, 1, 2, 2, 1, 1, 0, 0, 1, 0];
+  const signB = [0, 2, 4, 6, 8, 10, 8, 6, 4, 2, 1, 0];
+  const queryA = [0, 0, 0, 1, 1, 1, 2, 1, 1, 0, 1, 0];
+  importSamples([
+    ...[signA, signA.map(value => value + 0.01), signA.map(value => value - 0.01)]
+      .map(features => ({ kind: 'dynamic', label: 'A', features })),
+    ...[signB, signB.map(value => value + 0.01), signB.map(value => value - 0.01)]
+      .map(features => ({ kind: 'dynamic', label: 'B', features }))
+  ]);
+
+  assert.equal(classify('dynamic', queryA).label, 'A');
+});
