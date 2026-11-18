@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
-  classifyDynamicLetter, extractTemporalFeatures, TEMPORAL_STEPS
-} from '../src/dynamicRecognition.js';
+import { build } from 'esbuild';
+
+const { outputFiles } = await build({
+  entryPoints: ['src/dynamicRecognition.js'],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  write: false
+});
+const recognition = await import(
+  `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`
+);
+const { classifyDynamicLetter, extractTemporalFeatures, TEMPORAL_STEPS } = recognition;
 
 const poseFrames = () => Array.from(
   { length: TEMPORAL_STEPS },
@@ -36,7 +46,7 @@ function handshape(extended) {
   return points;
 }
 
-function dynamicFeatures(hand, path) {
+function dynamicFeatures(hand, path, shapeStartFrame = 0) {
   const wrist = hand[0];
   const scale = Math.hypot(hand[9].x - wrist.x, hand[9].y - wrist.y);
   const frame = Array(126).fill(0);
@@ -45,7 +55,9 @@ function dynamicFeatures(hand, path) {
     frame[index * 3 + 1] = (point.y - wrist.y) / scale;
     frame[index * 3 + 2] = (point.z - wrist.z) / scale;
   });
-  const poses = Array.from({ length: TEMPORAL_STEPS }, () => [...frame]);
+  const poses = Array.from({ length: TEMPORAL_STEPS }, (_, step) =>
+    step < shapeStartFrame ? Array(126).fill(0) : [...frame]
+  );
   const motion = path.map(([x, y]) => [wrist.x + x * scale, wrist.y + y * scale, scale]);
   return extractTemporalFeatures(poses, motion);
 }
@@ -89,7 +101,7 @@ test('previews J from an I handshape and a hooked pinky path', () => {
     [-0.3, -0.2], [-0.3, -0.1], [-0.25, 0], [-0.2, 0.1]
   ];
 
-  assert.equal(classifyDynamicLetter(dynamicFeatures(handshape([3]), path)).label, 'J');
+  assert.equal(classifyDynamicLetter(dynamicFeatures(handshape([3]), path, 1)).label, 'J');
 });
 
 test('previews Z from a D handshape and a three-stroke index path', () => {
@@ -104,4 +116,13 @@ test('previews Z from a D handshape and a three-stroke index path', () => {
 
 test('does not preview an unsupported stationary motion', () => {
   assert.equal(classifyDynamicLetter(extractTemporalFeatures(poseFrames())), null);
+});
+
+test('resamples a full dynamic window without changing the saved classifier vector size', () => {
+  const poses = Array.from({ length: 24 }, (_, step) =>
+    Array.from({ length: 126 }, () => step)
+  );
+  const motion = Array.from({ length: 24 }, (_, step) => [step / 24, step / 48, 0.1]);
+
+  assert.equal(extractTemporalFeatures(poses, motion).length, TEMPORAL_STEPS * 126);
 });

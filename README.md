@@ -1,17 +1,17 @@
-# Filipino Sign Language-to-Text-to-Audio System Using Mathematical Feature Extraction and Computational Classification
+# Filipino Sign Language-to-Text-to-Audio System
 
-**KUMPAS** is a browser-based Filipino Sign Language recognition prototype.
+**KUMPAS** is a browser-only Filipino Sign Language recognition prototype that includes the ASL-based A–Z manual alphabet used for FSL fingerspelling. Hand tracking, local ONNX alphabet inference, KNN classification, local sample storage, and speech playback run in the browser; no application backend is used.
 
 ## Features
 
 - Recognition webpage using browser webcam access and MediaPipe Hand Landmarker.
 - Camera device selection for any browser-visible phone, laptop, USB, or virtual camera.
-- Palm-scale-normalized features for up to two hands and static/dynamic KNN recognition.
+- Palm-scale-normalized features for up to two hands and static/dynamic FSL sign and alphabet KNN recognition.
 - Four-step workflow for collecting samples, inspecting live mathematical features, classifying signs, and testing held-out samples.
 - Single or timed sample capture (static bursts or spaced dynamic sequences), condition tags, per-label train/test splits, and JSON sample import/export.
-- Limited built-in static-letter and J/Z motion preview when matching KNN samples are unavailable.
+- A bundled pretrained ONNX model for static A–Z alphabet handshapes, plus motion previews for J/Z when trained KNN samples are unavailable.
 - Webcam video recording with a local video download while recognition continues.
-- Composable text output, configurable hold time, and Filipino/English speech playback.
+- Composable text output, automatic letter-name speech with a preferred Google English browser voice (when installed), and configurable hold time.
 - Mirrored or full-screen camera preview, quick copy and text download, and an eight-item phrasebook stored locally in the browser.
 - Eight objective-aligned evaluation indicators, CSV export, and localStorage persistence.
 
@@ -33,7 +33,7 @@ For a local shareable copy, run `npm run build`, then include the `dist` folder,
 
 ## Train recognition
 
-The built-in geometric preview estimates selected static letters (A, B, C, D, F, I, L, O, U, V, W, and Y) and simple J/Z motion. It is not validated FSL accuracy, and no complete FSL model or sample dataset is bundled. Other signs need at least three varied, FSL-validated examples per sign label. KNN uses k = 3 and Euclidean distance for static signs; dynamic signs use frame-based dynamic time warping to better align examples performed at different speeds. Only training samples are used, and a label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. Labels are filled automatically and spoken after the same result remains stable for the configured hold time; users do not need to type while signing. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence that includes wrist motion. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
+When no static KNN examples are available, the app uses the bundled `nocontextdoruk/asl-landmark-mlp` ONNX model for A–Z handshapes. The model runs locally on MediaPipe landmarks; webcam frames are not sent to an inference API. It recognizes the ASL-based manual alphabet used for FSL fingerspelling, not general FSL vocabulary, and has not been validated across FSL signers or this project's cameras. Treat its output as a suggestion. The model is licensed CC BY-NC 4.0; it is for non-commercial use with attribution. See [models/README.txt](./models/README.txt) and the bundled license/citation files. Dynamic J/Z still use motion rules; train KNN with at least three varied, correctly labeled examples per label for custom FSL signs and letters. Samples remain in browser localStorage. KNN uses k = 3 and Euclidean distance for static signs; dynamic KNN uses frame-based dynamic time warping. A label is returned only when the three nearest samples have a strict majority. Neighbor agreement is not measured recognition accuracy. A sign or letter is added to text and spoken after the same result remains stable for the configured hold time. Static samples use one normalized landmark frame with a fixed 126-value vector for up to two hands; dynamic samples use a 12-frame resampled sequence that includes wrist motion. The live feature panel shows 3D fingertip distance ratios and joint-flexion angles. Use **Record sign video** to download a local webcam clip while recognition continues.
 
 Samples are saved in this browser's `localStorage` and can be exported/imported as JSON. The split tool assigns held-out samples by label, but this sample-level split can leak near-duplicate frames and is not a participant-independent research split. Add varied representative samples for each validated label. Clearing browser site data removes them. The prototype does not synchronize data.
 

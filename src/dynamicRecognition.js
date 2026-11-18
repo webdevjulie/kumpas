@@ -1,6 +1,7 @@
 import { classifyStaticLetter } from './staticAlphabet.js';
 
 export const TEMPORAL_STEPS = 12;
+export const DYNAMIC_WINDOW_FRAMES = 24;
 
 export function extractTemporalFeatures(sequence, motionSequence = []) {
   if (!Array.isArray(sequence) || sequence.length < 3 || !Array.isArray(sequence[0])) {
@@ -52,18 +53,34 @@ export function classifyDynamicLetter(features) {
   if (!Array.isArray(features) || features.length !== TEMPORAL_STEPS * 126
     || !features.every(Number.isFinite)) return null;
 
-  const firstFrame = features.slice(0, 126);
-  const firstHand = Array.from({ length: 21 }, (_, index) => ({
-    x: firstFrame[index * 3],
-    y: firstFrame[index * 3 + 1],
-    z: firstFrame[index * 3 + 2]
-  }));
-  const startingShape = classifyStaticLetter(firstHand)?.label;
-  const trajectory = tip => Array.from({ length: TEMPORAL_STEPS }, (_, step) => {
+  const startingShapes = Array.from({ length: 4 }, (_, step) => {
     const offset = step * 126;
+    const wristX = features[offset];
+    const wristY = features[offset + 1];
+    const hand = Array.from({ length: 21 }, (_, index) => ({
+      x: features[offset + index * 3] - wristX,
+      y: features[offset + index * 3 + 1] - wristY,
+      z: features[offset + index * 3 + 2]
+    }));
+    return classifyStaticLetter(hand)?.label;
+  });
+  const trajectory = (tip, startStep) => Array.from({ length: TEMPORAL_STEPS }, (_, step) => {
+    const position = startStep + step * (TEMPORAL_STEPS - 1 - startStep)
+      / (TEMPORAL_STEPS - 1);
+    const left = Math.floor(position);
+    const right = Math.min(Math.ceil(position), TEMPORAL_STEPS - 1);
+    const fraction = position - left;
+    const leftOffset = left * 126;
+    const rightOffset = right * 126;
+    const coordinate = (point, axis) => {
+      const featureIndex = axis === 'x' ? 0 : 1;
+      const pointIndex = point * 3 + featureIndex;
+      return features[leftOffset + pointIndex]
+        + (features[rightOffset + pointIndex] - features[leftOffset + pointIndex]) * fraction;
+    };
     return {
-      x: features[offset] + features[offset + tip * 3],
-      y: features[offset + 1] + features[offset + tip * 3 + 1]
+      x: coordinate(0, 'x') + coordinate(tip, 'x'),
+      y: coordinate(0, 'y') + coordinate(tip, 'y')
     };
   });
   const range = points => ({
@@ -71,8 +88,9 @@ export function classifyDynamicLetter(features) {
     y: Math.max(...points.map(point => point.y)) - Math.min(...points.map(point => point.y))
   });
 
-  if (startingShape === 'I') {
-    const pinky = trajectory(20);
+  const iStart = startingShapes.indexOf('I');
+  if (iStart !== -1) {
+    const pinky = trajectory(20, iStart);
     const movement = pinky.slice(1).reduce((sum, point, index) =>
       sum + Math.hypot(point.x - pinky[index].x, point.y - pinky[index].y), 0
     );
@@ -82,8 +100,9 @@ export function classifyDynamicLetter(features) {
     }
   }
 
-  if (startingShape === 'D') {
-    const index = trajectory(8);
+  const dStart = startingShapes.indexOf('D');
+  if (dStart !== -1) {
+    const index = trajectory(8, dStart);
     const firstStroke = index[3].x - index[0].x;
     const middleStroke = index[7].x - index[4].x;
     const finalStroke = index[11].x - index[8].x;

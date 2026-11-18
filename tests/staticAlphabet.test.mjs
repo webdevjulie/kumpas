@@ -29,8 +29,47 @@ function handshape({ extended = [] } = {}) {
   return points;
 }
 
+function setFinger(points, index, coordinates) {
+  const finger = [
+    { mcp: 5, pip: 6, dip: 7, tip: 8 },
+    { mcp: 9, pip: 10, dip: 11, tip: 12 },
+    { mcp: 13, pip: 14, dip: 15, tip: 16 },
+    { mcp: 17, pip: 18, dip: 19, tip: 20 }
+  ][index];
+  [finger.mcp, finger.pip, finger.dip, finger.tip].forEach((landmark, pointIndex) => {
+    points[landmark] = coordinates[pointIndex];
+  });
+}
+
+function curlFingers(points) {
+  const xPositions = [0.4, 0.5, 0.6, 0.7];
+  const tipPositions = [0.46, 0.49, 0.52, 0.55];
+  xPositions.forEach((x, index) => {
+    setFinger(points, index, [
+      { x, y: 0.62, z: 0 },
+      { x, y: 0.68, z: 0 },
+      { x: (x + tipPositions[index]) / 2, y: 0.72, z: 0 },
+      { x: tipPositions[index], y: 0.7, z: 0 }
+    ]);
+  });
+  return points;
+}
+
 test('previews the clear four-finger B handshape', () => {
   assert.equal(classifyStaticLetter(handshape({ extended: [0, 1, 2, 3] })).label, 'B');
+});
+
+test('keeps U, V, and Y distinct from the added alphabet estimates', () => {
+  const u = handshape({ extended: [0, 1] });
+  assert.equal(classifyStaticLetter(u).label, 'U');
+
+  const v = handshape({ extended: [0, 1] });
+  v[12] = { x: 0.65, y: 0.2, z: 0 };
+  assert.equal(classifyStaticLetter(v).label, 'V');
+
+  const y = handshape({ extended: [3] });
+  y[4] = { x: 0.3, y: 0.7, z: 0 };
+  assert.equal(classifyStaticLetter(y).label, 'Y');
 });
 
 test('previews an F handshape when the thumb and index fingertip meet', () => {
@@ -65,7 +104,104 @@ test('previews a C handshape with gently curved fingers and an open thumb gap', 
   assert.equal(classifyStaticLetter(points).label, 'C');
 });
 
+test('previews crossed R and side-facing H handshapes', () => {
+  const crossed = handshape({ extended: [0, 1] });
+  crossed[8] = { x: 0.55, y: 0.2, z: 0 };
+  crossed[12] = { x: 0.35, y: 0.2, z: 0 };
+  assert.equal(classifyStaticLetter(crossed).label, 'R');
+
+  const horizontal = handshape({ extended: [0, 1] });
+  setFinger(horizontal, 0, [
+    { x: 0.4, y: 0.62, z: 0 }, { x: 0.3, y: 0.62, z: 0 },
+    { x: 0.2, y: 0.62, z: 0 }, { x: 0.1, y: 0.62, z: 0 }
+  ]);
+  setFinger(horizontal, 1, [
+    { x: 0.5, y: 0.62, z: 0 }, { x: 0.4, y: 0.62, z: 0 },
+    { x: 0.3, y: 0.62, z: 0 }, { x: 0.2, y: 0.62, z: 0 }
+  ]);
+  assert.equal(classifyStaticLetter(horizontal).label, 'H');
+});
+
+test('previews G, X, and a rounded O handshape', () => {
+  const g = handshape({ extended: [0] });
+  setFinger(g, 0, [
+    { x: 0.4, y: 0.62, z: 0 }, { x: 0.3, y: 0.62, z: 0 },
+    { x: 0.2, y: 0.62, z: 0 }, { x: 0.1, y: 0.62, z: 0 }
+  ]);
+  g[4] = { x: 0.3, y: 0.7, z: 0 };
+  assert.equal(classifyStaticLetter(g).label, 'G');
+
+  const x = handshape();
+  setFinger(x, 0, [
+    { x: 0.4, y: 0.62, z: 0 }, { x: 0.4, y: 0.48, z: 0 },
+    { x: 0.45, y: 0.5, z: 0 }, { x: 0.5, y: 0.55, z: 0 }
+  ]);
+  assert.equal(classifyStaticLetter(x).label, 'X');
+
+  const o = handshape();
+  for (let index = 0; index < 4; index += 1) {
+    setFinger(o, index, [
+      { x: 0.4 + index * 0.1, y: 0.62, z: 0 },
+      { x: 0.4 + index * 0.1, y: 0.5, z: 0 },
+      { x: 0.45, y: 0.55, z: 0 },
+      { x: 0.45, y: 0.68, z: 0 }
+    ]);
+  }
+  o[4] = { x: 0.45, y: 0.68, z: 0 };
+  assert.equal(classifyStaticLetter(o).label, 'O');
+});
+
+test('previews K, P, and Q using thumb contact and finger direction', () => {
+  const k = handshape({ extended: [0, 1] });
+  k[4] = { x: 0.45, y: 0.48, z: 0 };
+  assert.equal(classifyStaticLetter(k).label, 'K');
+
+  const p = handshape();
+  setFinger(p, 0, [
+    { x: 0.4, y: 0.62, z: 0 }, { x: 0.4, y: 0.68, z: 0 },
+    { x: 0.4, y: 0.75, z: 0 }, { x: 0.4, y: 0.81, z: 0 }
+  ]);
+  setFinger(p, 1, [
+    { x: 0.5, y: 0.62, z: 0 }, { x: 0.5, y: 0.68, z: 0 },
+    { x: 0.5, y: 0.75, z: 0 }, { x: 0.5, y: 0.81, z: 0 }
+  ]);
+  p[4] = { x: 0.45, y: 0.7, z: 0 };
+  assert.equal(classifyStaticLetter(p).label, 'P');
+
+  const q = handshape();
+  setFinger(q, 0, [
+    { x: 0.4, y: 0.62, z: 0 }, { x: 0.4, y: 0.68, z: 0 },
+    { x: 0.4, y: 0.75, z: 0 }, { x: 0.4, y: 0.81, z: 0 }
+  ]);
+  q[4] = { x: 0.3, y: 0.95, z: 0 };
+  assert.equal(classifyStaticLetter(q).label, 'Q');
+});
+
+test('previews T, N, and M from the nearest thumb-to-finger contact', () => {
+  const contacts = [
+    [{ x: 0.4, y: 0.75, z: 0 }, 'T'],
+    [{ x: 0.5, y: 0.75, z: 0 }, 'N'],
+    [{ x: 0.65, y: 0.75, z: 0 }, 'M']
+  ];
+  for (const [thumbTip, expected] of contacts) {
+    const points = curlFingers(handshape());
+    points[4] = thumbTip;
+    assert.equal(classifyStaticLetter(points).label, expected);
+  }
+});
+
+test('distinguishes S and E from thumb depth on a closed handshape', () => {
+  for (const [z, expected] of [[-0.08, 'S'], [0, 'E']]) {
+    const points = curlFingers(handshape());
+    points[3] = { x: 0.46, y: 0.65, z: 0 };
+    points[4] = { x: 0.36, y: 0.8, z };
+    assert.equal(classifyStaticLetter(points).label, expected);
+  }
+});
+
 test('does not guess for unsupported or invalid handshapes', () => {
-  assert.equal(classifyStaticLetter(handshape()), null);
+  const ambiguous = handshape({ extended: [0, 1] });
+  ambiguous[12] = { x: 0.526, y: 0.2, z: 0 };
+  assert.equal(classifyStaticLetter(ambiguous), null);
   assert.equal(classifyStaticLetter([]), null);
 });

@@ -1,1 +1,1 @@
-Store labeled static FSL samples and metadata here.
+Store labeled FSL sign and fingerspelling alphabet training samples and metadata here. Runtime samples are collected and stored locally in the browser; no backend is required. Static A–Z letters also use the pretrained, locally run ASL landmark model described in models/README.txt. Validate it with FSL signers before making accuracy claims.

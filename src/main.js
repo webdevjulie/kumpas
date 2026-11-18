@@ -6,9 +6,9 @@ import { openCamera, stopCamera, listCameras } from './camera.js';
 import { describeHandFeatures, extractHandFeatures } from './featureExtraction.js';
 import { createHandLandmarker, detectHands, drawLandmarks } from './handTracking.js';
 import {
-  classifyDynamicLetter, extractTemporalFeatures, TEMPORAL_STEPS
+  classifyDynamicLetter, DYNAMIC_WINDOW_FRAMES, extractTemporalFeatures, TEMPORAL_STEPS
 } from './dynamicRecognition.js';
-import { classifyStaticLetter } from './staticAlphabet.js';
+import { classifyAslAlphabet, loadAslAlphabetModel } from './aslAlphabetClassifier.js';
 import { recordDynamicAttempt, recordStaticAttempt } from './evaluation.js';
 import { deleteSavedPhrase, loadSavedPhrases, savePhrase } from './phrasebook.js';
 import { speakText } from './speechOutput.js';
@@ -39,6 +39,7 @@ let motionSequence = [];
 let latestMotionPoint = null;
 let lastFrameAt = 0;
 let lastClassificationAt = 0;
+let classificationPending = false;
 let lastFpsTimestamp = 0;
 let lastStatsAt = 0;
 const frameIntervals = [];
@@ -57,6 +58,8 @@ let captureTarget = 0;
 let captureCount = 0;
 let translatedText = '';
 let activeWorkflowStep = 'data';
+let alphabetModelError = '';
+let alphabetModelLoadPromise = null;
 
 function setStatus(message, isError = false) {
   status.textContent = message;
@@ -143,8 +146,35 @@ function updateTrainingStatus(message) {
   const staticReady = hasTrainableSamples('static');
   const dynamicReady = hasTrainableSamples('dynamic');
   byId('trainingStatus').textContent = staticReady || dynamicReady
-    ? `KNN ready for ${[staticReady && 'static', dynamicReady && 'dynamic'].filter(Boolean).join(' and ')} signs (k = 3).`
+    ? `KNN ready for ${[staticReady && 'static', dynamicReady && 'dynamic'].filter(Boolean).join(' and ')} FSL signs/alphabet letters (k = 3).`
     : 'Add at least 3 training samples for every label in a sign type, then select Train model.';
+}
+
+function prepareAlphabetModel() {
+  if (!alphabetModelLoadPromise) {
+    updateTrainingStatus('Loading the local pretrained alphabet model…');
+    alphabetModelLoadPromise = loadAslAlphabetModel().then(() => {
+      alphabetModelError = '';
+      updateTrainingStatus('The pretrained ASL-based alphabet model is ready and runs locally in this browser.');
+    }).catch(error => {
+      alphabetModelError = error instanceof Error ? error.message : String(error);
+      updateTrainingStatus(`The local alphabet model could not load: ${alphabetModelError}. Use Trained KNN or reload the page.`);
+    });
+  }
+  return alphabetModelLoadPromise;
+}
+
+function speakWithStatus(text, interrupt = true) {
+  try {
+    const voice = speakText(text, byId('voiceLanguage').value, { interrupt });
+    const isSingleLetter = /^[A-ZÑ]$/i.test(text.trim());
+    byId('translationStatus').textContent = isSingleLetter && !/google/i.test(voice)
+      ? `Google English voice is unavailable; speaking with ${voice}.`
+      : `Speaking with ${voice}.`;
+  } catch (error) {
+    byId('translationStatus').textContent = error.message;
+    showError(error);
+  }
 }
 
 function renderFeatureSummary(hands) {
@@ -269,6 +299,10 @@ async function connectCamera() {
 
     setStatus('Preparing hand tracking. This may take a moment…');
     landmarker = await createHandLandmarker();
+    if (modeSelect.value === 'static'
+      && (byId('classifierType').value === 'preview' || !hasTrainableSamples('static'))) {
+      await prepareAlphabetModel();
+    }
     byId('connectCamera').disabled = true;
     byId('disconnectCamera').disabled = false;
     byId('captureSample').disabled = false;
@@ -304,7 +338,7 @@ function updateTestAvailability() {
 
 function currentSampleFeatures(kind) {
   if (kind === 'static') return latestFeatures;
-  return sequence.length === TEMPORAL_STEPS
+  return sequence.length >= DYNAMIC_WINDOW_FRAMES
     ? extractTemporalFeatures(sequence, motionSequence)
     : null;
 }
@@ -317,7 +351,7 @@ function saveCurrentSample() {
   if (!features) {
     throw new Error(kind === 'static'
       ? 'No hand detected. Hold your hand in front of the camera.'
-      : 'Keep the full moving sign visible for about one second before capturing a sample.');
+      : 'Keep the full moving sign visible for about two seconds before capturing a sample.');
   }
   const total = addSample(kind, labelInput.value, features, {
     condition: byId('sampleCondition').value
@@ -340,11 +374,12 @@ function startBurstCapture() {
   if (captureInterval) return;
 
   const kind = modeSelect.value;
+  const label = labelInput.value;
   const isDynamic = kind === 'dynamic';
   const sampleLimit = isDynamic ? 3 : 25;
-  const sampleInterval = isDynamic ? 1000 : 120;
+  const sampleInterval = isDynamic ? 100 : 120;
   captureCount = 0;
-  captureTarget = performance.now() + (isDynamic ? 4000 : 3000);
+  captureTarget = performance.now() + (isDynamic ? 10000 : 3000);
   if (isDynamic) {
     sequence = [];
     motionSequence = [];
@@ -358,8 +393,14 @@ function startBurstCapture() {
       stopBurstCapture('Capture stopped because the camera was disconnected.');
       return;
     }
+    if (modeSelect.value !== kind || labelInput.value !== label) {
+      stopBurstCapture('Capture stopped because the sign type or label changed.');
+      return;
+    }
     if (performance.now() >= captureTarget || captureCount >= sampleLimit) {
-      stopBurstCapture(`Captured ${captureCount} of ${sampleLimit} ${kind} samples.`);
+      stopBurstCapture(isDynamic && captureCount < sampleLimit
+        ? `Captured ${captureCount} of ${sampleLimit} samples. Repeat each complete sign with your hand visible.`
+        : `Captured ${captureCount} of ${sampleLimit} ${kind} samples.`);
       updateSamples();
       updateTestAvailability();
       return;
@@ -369,6 +410,14 @@ function startBurstCapture() {
       saveCurrentSample();
       captureCount += 1;
       byId('captureStatus').textContent = `Capturing samples: ${captureCount}/${sampleLimit}`;
+      if (isDynamic) {
+        sequence = [];
+        motionSequence = [];
+        if (captureCount < sampleLimit) {
+          byId('captureStatus').textContent =
+            `Saved ${captureCount}/${sampleLimit}. Repeat the complete sign for the next sample.`;
+        }
+      }
       if (captureCount >= sampleLimit) {
         stopBurstCapture(`Captured ${captureCount} ${kind} samples.`);
       }
@@ -482,18 +531,22 @@ function runHeldOutTest() {
   });
 }
 
-function classifyCurrent(features, kind, elapsedMs, landmarks) {
+async function classifyCurrent(features, kind, elapsedMs, landmarks) {
   const classificationStarted = performance.now();
   const trainable = hasTrainableSamples(kind);
   const previewOnly = byId('classifierType').value === 'preview';
+  const usePreview = previewOnly || !trainable;
   let result = previewOnly ? null : classify(kind, features);
-  if (kind === 'dynamic' && (previewOnly || !trainable)) {
+  if (kind === 'dynamic' && usePreview) {
     const letter = classifyDynamicLetter(features);
     if (letter) result = { ...letter, source: 'letter preview' };
   }
-  if (kind === 'static' && (previewOnly || (!result && !trainable))) {
-    const letter = classifyStaticLetter(landmarks);
-    if (letter) result = { ...letter, source: 'letter preview' };
+  if (kind === 'static' && usePreview) {
+    await prepareAlphabetModel();
+    if (!alphabetModelError) {
+      const letter = await classifyAslAlphabet(landmarks);
+      if (letter) result = { ...letter, source: 'pretrained alphabet model' };
+    }
   }
   const measuredMs = elapsedMs + performance.now() - classificationStarted;
   if (testSession) {
@@ -503,15 +556,13 @@ function classifyCurrent(features, kind, elapsedMs, landmarks) {
     testSession.kind = kind;
   }
   if (!result) {
-    prediction.textContent = kind === 'dynamic' && !trainable
-      ? 'No J or Z motion detected. Trace the full sign path, or add samples for another dynamic sign.'
-      : previewOnly && kind === 'dynamic'
-        ? 'The built-in motion preview supports J and Z only. Select Trained KNN for other moving signs.'
-        : trainable
-        ? 'No clear KNN majority. Hold the sign steadily or add more varied samples.'
-        : kind === 'static'
-          ? 'No supported static letter detected. Add approved samples for this sign.'
-          : 'No matching dynamic sign. Add more varied samples and try again.';
+    prediction.textContent = usePreview && kind === 'dynamic'
+      ? 'No J or Z motion detected. Trace the full sign path; other dynamic signs require trained samples.'
+      : usePreview
+        ? alphabetModelError
+          ? 'The local alphabet model is unavailable. Check model status or use Trained KNN.'
+          : 'No confident alphabet match. Keep one hand fully visible; train KNN for other FSL signs.'
+        : 'No clear KNN majority. Hold the sign steadily or add more varied samples.';
     currentPrediction = '';
     pendingPrediction = '';
     pendingPredictionCount = 0;
@@ -540,9 +591,11 @@ function classifyCurrent(features, kind, elapsedMs, landmarks) {
   currentPrediction = result.label;
   if (testSession) testSession.finalPrediction = result.label;
   renderTextOutput(prediction, result.label);
-  if (result.source === 'letter preview') {
+  if (result.source === 'letter preview' || result.source === 'pretrained alphabet model') {
     const matchPercent = Math.round(result.matchScore * 100);
-    byId('matchValue').textContent = `${matchPercent}% rule match`;
+    byId('matchValue').textContent = result.source === 'pretrained alphabet model'
+      ? `${matchPercent}% model score`
+      : `${matchPercent}% rule match`;
     byId('matchBar').style.width = `${matchPercent}%`;
   } else {
     const agreementPercent = Math.round(result.agreement * 100);
@@ -554,13 +607,7 @@ function classifyCurrent(features, kind, elapsedMs, landmarks) {
   if (result.label !== lastSpokenPrediction) {
     lastSpokenPrediction = result.label;
     if (byId('addToText').checked) addToTranslation(result.label);
-    if (byId('speakEachSign').checked) {
-      try {
-        speakText(result.label, byId('voiceLanguage').value);
-      } catch (error) {
-        showError(error);
-      }
-    }
+    if (byId('speakEachSign').checked) speakWithStatus(result.label, false);
   }
 }
 
@@ -626,7 +673,10 @@ function trackFrame(timestamp) {
       if (timestamp - lastFrameAt >= 80) {
         sequence.push(features);
         motionSequence.push(latestMotionPoint);
-        if (sequence.length > TEMPORAL_STEPS) {
+        const maximumFrames = modeSelect.value === 'dynamic'
+          ? DYNAMIC_WINDOW_FRAMES
+          : TEMPORAL_STEPS;
+        if (sequence.length > maximumFrames) {
           sequence.shift();
           motionSequence.shift();
         }
@@ -635,14 +685,31 @@ function trackFrame(timestamp) {
 
       const mode = modeSelect.value;
       const interval = 350;
-      if (timestamp - lastClassificationAt >= interval) {
+      if (timestamp - lastClassificationAt >= interval && !classificationPending) {
         lastClassificationAt = timestamp;
+        let classificationTask = null;
         if (mode === 'static') {
-          classifyCurrent(features, mode, performance.now() - started, hands[0]);
-        } else if (sequence.length === TEMPORAL_STEPS) {
+          classificationTask = classifyCurrent(features, mode, performance.now() - started, hands[0]);
+        } else if (sequence.length >= DYNAMIC_WINDOW_FRAMES) {
           const dynamicStarted = performance.now();
           latestDynamicFeatures = extractTemporalFeatures(sequence, motionSequence);
-          classifyCurrent(latestDynamicFeatures, mode, performance.now() - dynamicStarted);
+          classificationTask = classifyCurrent(
+            latestDynamicFeatures, mode, performance.now() - dynamicStarted
+          );
+        }
+        if (classificationTask) {
+          classificationPending = true;
+          classificationTask
+            .catch(error => {
+              if (!reportedError) {
+                reportedError = true;
+                showError(error);
+              }
+              stopRecognition();
+            })
+            .finally(() => {
+              classificationPending = false;
+            });
         }
       }
       setStatus('Hand detected. Show a sign to recognize it.');
@@ -831,6 +898,10 @@ modeSelect.addEventListener('change', () => {
   prediction.textContent = 'Show a sign to the camera.';
   byId('matchValue').textContent = '--';
   byId('matchBar').style.width = '0%';
+  if (modeSelect.value === 'static'
+    && (byId('classifierType').value === 'preview' || !hasTrainableSamples('static'))) {
+    prepareAlphabetModel();
+  }
   updateTestAvailability();
 });
 
@@ -954,21 +1025,23 @@ byId('clearSamples').addEventListener('click', () => {
 
 byId('trainModel').addEventListener('click', () => {
   if (byId('classifierType').value === 'preview') {
-    updateTrainingStatus('The geometric preview has no trained model and is not validated FSL accuracy.');
+    updateTrainingStatus('The pretrained alphabet model runs locally and cannot be trained here. Use Trained KNN for custom FSL signs.');
     return;
   }
   if (!hasTrainableSamples(modeSelect.value)) {
-    updateTrainingStatus(`Add at least 3 training samples for every ${modeSelect.value} label before training KNN.`);
+    updateTrainingStatus(`Add at least 3 training samples for every ${modeSelect.value} FSL sign or alphabet label before training KNN.`);
     return;
   }
-  updateTrainingStatus(`KNN model ready for ${modeSelect.value} signs (k = 3).`);
+  updateTrainingStatus(`KNN model ready for ${modeSelect.value} FSL signs/alphabet letters (k = 3).`);
   updateTestAvailability();
 });
 
 byId('classifierType').addEventListener('change', () => {
-  updateTrainingStatus(byId('classifierType').value === 'preview'
-    ? 'Limited geometric estimates only; this is not a trained or validated FSL model.'
-    : null);
+  if (byId('classifierType').value === 'preview') {
+    prepareAlphabetModel();
+  } else {
+    updateTrainingStatus(null);
+  }
 });
 
 byId('holdTime').addEventListener('input', event => {
@@ -976,11 +1049,7 @@ byId('holdTime').addEventListener('input', event => {
 });
 
 byId('speak').addEventListener('click', () => {
-  try {
-    speakText(currentPrediction, byId('voiceLanguage').value);
-  } catch (error) {
-    showError(error);
-  }
+  speakWithStatus(currentPrediction);
 });
 
 byId('translationOutput').addEventListener('input', event => {
@@ -999,11 +1068,7 @@ byId('deleteLastCharacter').addEventListener('click', () => {
   updateTranslationTools();
 });
 byId('speakTranslation').addEventListener('click', () => {
-  try {
-    speakText(byId('translationOutput').value, byId('voiceLanguage').value);
-  } catch (error) {
-    showError(error);
-  }
+  speakWithStatus(byId('translationOutput').value);
 });
 byId('clearTranslation').addEventListener('click', () => {
   translatedText = '';

@@ -1,1 +1,1 @@
-Store ordered dynamic FSL video/frame sequences and labels here.
+Store ordered FSL dynamic sign and fingerspelling alphabet sequences (including J/Z motion) and labels here.

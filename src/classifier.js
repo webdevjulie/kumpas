@@ -14,7 +14,7 @@ export function getSamples() {
 
 export function addSample(kind, label, features, metadata = {}) {
   if (!['static', 'dynamic'].includes(kind)) throw new Error('Choose a valid sign category.');
-  if (!label.trim()) throw new Error('Enter a validated FSL label before capturing a sample.');
+  if (!label.trim()) throw new Error('Enter a validated FSL sign or alphabet label before capturing a sample.');
   if (!Array.isArray(features) || !features.length || !features.every(Number.isFinite)) {
     throw new Error('Cannot save an empty or invalid feature sample.');
   }
