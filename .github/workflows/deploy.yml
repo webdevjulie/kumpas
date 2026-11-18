@@ -44,3 +44,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published app bundle
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          for attempt in {1..12}; do
+            html="$(curl --fail --silent --show-error --location "${PAGE_URL}?verify=${GITHUB_SHA}" 2>/dev/null || true)"
+            if printf '%s' "$html" | grep -Eq 'src="[^"]*/assets/main-[^"]+\.js"'; then
+              echo "GitHub Pages is serving the built app bundle."
+              exit 0
+            fi
+            sleep 5
+          done
+          if printf '%s' "$html" | grep -Fq 'src="src/main.js"'; then
+            echo "::error::GitHub Pages is serving raw source files. In repository Settings > Pages, set Build and deployment > Source to GitHub Actions, then rerun this workflow."
+          else
+            echo "::error::Could not verify the built app bundle at ${PAGE_URL}. Check the GitHub Pages deployment."
+          fi
+          exit 1
