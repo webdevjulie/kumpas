@@ -7,25 +7,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/main-lHp9SycO.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/evaluation-ex64-_L3.js">
-  <link rel="stylesheet" crossorigin href="/assets/evaluation-CuRNOTUu.css">
+  <script type="module" crossorigin src="/assets/main-DkW22Mdb.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/evaluation-DKt-UYL-.js">
+  <link rel="stylesheet" crossorigin href="/assets/evaluation-DC6g6PIH.css">
 </head>
 <body>
   <a class="skip-link" href="#recognitionTools">Skip to recognition tools</a>
   <header>
+    <div class="navbar-banderitas" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
     <a class="brand" href="index.html">KUMPAS <span>FSL</span></a>
-    <p class="header-context">Filipino Sign Language · Text · Speech</p>
+    <p class="header-context">Filipino Sign Language · Fingerspelling · Speech</p>
     <span class="privacy-badge"><span aria-hidden="true"></span> Private on this device</span>
   </header>
   <main id="recognitionTools" class="wrap recognition">
     <section class="panel intro">
-      <p class="eyebrow">FILIPINO SIGN LANGUAGE</p>
-      <h1>Sign to text and speech</h1>
-      <p>Connect your camera, show a sign, and follow the result on screen.</p>
+      <div class="fiesta-banderitas" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="eyebrow">MABUHAY · FILIPINO SIGN LANGUAGE</p>
+      <h1>Let your hands <span>tell the story.</span></h1>
+      <p>Connect your camera, sign or fingerspell a letter, and bring your message to life with text and speech.</p>
       <details class="system-details">
         <summary>About this system</summary>
-        <p>Filipino Sign Language-to-Text-to-Audio System Using Mathematical Feature Extraction and Computational Classification.</p>
+        <p>Browser-only Filipino Sign Language recognition, including the ASL-based A–Z manual alphabet for fingerspelling, using hand landmarks and local KNN classification.</p>
       </details>
     </section>
 
@@ -35,9 +42,13 @@
           <span class="step-number" aria-hidden="true">1</span>
           <div>
             <h2>Connect your camera</h2>
-            <p class="help">Use any camera available to this browser: phone, laptop, USB, or virtual webcam. For a phone on another device, use a webcam bridge such as Iriun.</p>
+            <p class="help">Choose a camera, then select Connect camera. Your video stays on this device.</p>
           </div>
         </div>
+        <details class="camera-help">
+          <summary>Having trouble connecting?</summary>
+          <p>On a phone, open KUMPAS using its HTTPS address and allow camera access. A computer's local IP address does not allow phone-camera access. To use your phone as a computer webcam, use a webcam bridge such as Iriun.</p>
+        </details>
         <div class="camera-controls">
           <label>Camera<select id="cameraDevice"><option value="">Default camera</option></select></label>
           <button id="refreshCameras" type="button" class="secondary">Refresh cameras</button>
@@ -82,7 +93,11 @@
           <div><span>Recognition support</span><strong id="matchValue">--</strong></div>
           <div class="match-track"><span id="matchBar"></span></div>
         </div>
-        <p class="recognition-note">The built-in preview supports selected static letters and simple J/Z motion. It is a geometric heuristic, not validated FSL accuracy.</p>
+        <p class="recognition-note">The pretrained model recognizes alphabet letters only. Other FSL signs need training samples. Video stays on this device.</p>
+        <details class="recognition-details">
+          <summary>About recognition and privacy</summary>
+          <p class="help">A pretrained ASL-based A–Z hand-landmark model estimates fingerspelling letters locally in this browser; J/Z can also be traced as motions. It is an alphabet model, not a full FSL vocabulary model, and has not been validated with diverse FSL signers. Other FSL signs can use browser-local trained KNN samples. Webcam frames are not uploaded and no application backend is used.</p>
+        </details>
         <div class="actions">
           <button id="speak" disabled>Replay audio</button>
           <button id="openTextTools" type="button" class="secondary">Open text tools</button>
@@ -100,8 +115,12 @@
 
       <section id="step-data" class="workflow-stage" role="tabpanel" aria-labelledby="tab-data">
         <h2>Gather approved sign samples</h2>
-        <p class="help">Choose an approved sign, connect the camera, and capture varied samples. Data stays in this browser.</p>
-        <p class="notice">The built-in preview supports simple J/Z motion. For other dynamic signs, select Dynamic, capture at least 3 varied examples per sign while moving through its full path, then use Trained KNN. Re-capture dynamic samples saved before this update.</p>
+        <p class="help">Choose an FSL sign or alphabet letter, connect the camera, and capture varied, correctly labeled examples. Samples stay on this device.</p>
+        <p class="notice">Common sign labels are not pre-trained. Capture at least 3 separate, approved samples per sign, then train KNN to recognize them.</p>
+        <details class="sample-guidance">
+          <summary>More about samples and model limits</summary>
+          <p class="help">The bundled pretrained model recognizes static A–Z handshapes only; it does not recognize common FSL words. Common signs default to Dynamic mode; verify the correct sign type against an FSL reference, then capture at least 3 separate, correctly labeled performances per sign and use Trained KNN. Use Capture one once per separate static attempt; adjacent video frames from one held pose are not independent examples. Static letters use Static mode, except J/Z. The model runs locally and is licensed CC BY-NC 4.0; see its attribution and license in the models folder.</p>
+        </details>
         <div class="training-controls">
           <label>Sign or letter
             <select id="label">
@@ -129,7 +148,7 @@
         </div>
         <div class="actions">
           <button id="captureSample" disabled>Capture one (Space)</button>
-          <button id="captureBurst" class="secondary" disabled>Capture 25 in 3 seconds</button>
+          <button id="captureBurst" class="secondary" disabled hidden>Capture 3 dynamic samples</button>
         </div>
         <p id="captureStatus" class="status" role="status">Connect the camera before capturing samples.</p>
         <h3>Saved samples: <span id="sampleCount">0</span></h3>
@@ -184,20 +203,21 @@
         <div class="classification-controls">
           <label>Classifier
             <select id="classifierType">
-              <option value="knn">Trained KNN (k = 3)</option>
-              <option value="preview">Limited static &amp; J/Z motion preview</option>
+              <option value="knn">Trained KNN (k = 3; speed-aligned for dynamic)</option>
+              <option value="preview">Pretrained alphabet model (local ONNX; no upload)</option>
             </select>
           </label>
           <button id="trainModel">Train model</button>
-          <span id="trainingStatus" class="status" role="status">KNN uses saved training samples; no FSL model is bundled.</span>
+          <span id="trainingStatus" class="status" role="status">The pretrained alphabet model runs locally; Trained KNN uses samples saved in this browser.</span>
           <label>Hold time <output id="holdTimeValue">900 ms</output>
             <input id="holdTime" type="range" min="0" max="1500" step="100" value="900">
           </label>
           <label>Voice language
-            <select id="voiceLanguage"><option value="fil-PH">Filipino</option><option value="en-US">English</option></select>
+            <select id="voiceLanguage"><option value="en-US">English</option></select>
           </label>
+          <p class="help">Single letters use a Google English voice when available; words use the device's English voice. If Google voice is unavailable, the app uses another installed English voice. Voice availability depends on your browser and device.</p>
           <label class="check-control"><input id="addToText" type="checkbox" checked> Add stable signs to text</label>
-          <label class="check-control"><input id="speakEachSign" type="checkbox" checked> Speak each stable sign</label>
+          <label class="check-control"><input id="speakEachSign" type="checkbox" checked> Speak each stable sign or alphabet letter immediately</label>
         </div>
         <label>Translation output<textarea id="translationOutput" rows="4" placeholder="Recognized signs appear here..."></textarea></label>
         <p id="translationStatus" class="status" role="status">Ready for recognized signs.</p>
@@ -239,7 +259,7 @@
         </div>
         <details class="research-panel">
           <summary>Research evaluation (optional)</summary>
-          <p class="help">Timed evaluations use trained KNN only; geometric preview results are excluded.</p>
+          <p class="help">Timed evaluations use trained KNN only; pretrained alphabet-model results are excluded.</p>
           <div class="recognition-controls">
             <label>Expected sign label<input id="expected" placeholder="Correct label for this test"></label>
             <label>Was the spoken result correct?
