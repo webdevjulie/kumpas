@@ -21,6 +21,7 @@ test('provides the common FSL labels and defaults them to dynamic recognition', 
 
 test('keeps alphabet letters static except motion letters J and Z', () => {
   assert.equal(getDefaultSignType('A'), 'static');
+  assert.equal(getDefaultSignType('Ñ'), 'static');
   assert.equal(getDefaultSignType('J'), 'dynamic');
   assert.equal(getDefaultSignType('Z'), 'dynamic');
   assert.equal(getDefaultSignType('Custom FSL sign'), 'static');

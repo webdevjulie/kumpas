@@ -123,10 +123,13 @@ function updateSamples() {
   }
 
   const savedLabels = [...new Set(samples.map(sample => sample.label))]
-    .filter(label => !/^[A-Z]$/.test(label) && !COMMON_FSL_SIGNS.includes(label))
+    .filter(label => !/^[A-ZÑ]$/.test(label) && !COMMON_FSL_SIGNS.includes(label))
     .sort((a, b) => a.localeCompare(b));
   const selectedLabel = labelInput.value;
-  const letterOptions = Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index));
+  const letterOptions = [
+    ...Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index)),
+    'Ñ'
+  ];
   const createOptionGroup = (name, labels) => {
     const group = document.createElement('optgroup');
     group.label = name;
@@ -180,8 +183,11 @@ function speakWithStatus(text, interrupt = true) {
   try {
     const voice = speakText(text, byId('voiceLanguage').value, { interrupt });
     const isSingleLetter = /^[A-ZÑ]$/i.test(text.trim());
+    const isFilipino = byId('voiceLanguage').value.startsWith('fil');
     byId('translationStatus').textContent = isSingleLetter && !/google/i.test(voice)
-      ? `Google English voice is unavailable; speaking with ${voice}.`
+      ? isFilipino
+        ? `Speaking with ${voice}.`
+        : `Google English voice is unavailable; speaking with ${voice}.`
       : `Speaking with ${voice}.`;
   } catch (error) {
     byId('translationStatus').textContent = error.message;
@@ -703,7 +709,7 @@ function trackFrame(timestamp) {
       }
 
       const mode = modeSelect.value;
-      const interval = 350;
+      const interval = 250;
       if (timestamp - lastClassificationAt >= interval && !classificationPending) {
         lastClassificationAt = timestamp;
         let classificationTask = null;

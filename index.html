@@ -207,13 +207,16 @@
           </label>
           <button id="trainModel">Train model</button>
           <span id="trainingStatus" class="status" role="status">The pretrained alphabet model runs locally; Trained KNN uses samples saved in this browser.</span>
-          <label>Hold time <output id="holdTimeValue">900 ms</output>
-            <input id="holdTime" type="range" min="0" max="1500" step="100" value="900">
+          <label>Hold time <output id="holdTimeValue">600 ms</output>
+            <input id="holdTime" type="range" min="300" max="1500" step="100" value="600">
           </label>
           <label>Voice language
-            <select id="voiceLanguage"><option value="en-US">English</option></select>
+            <select id="voiceLanguage">
+              <option value="fil-PH">Filipino / Tagalog</option>
+              <option value="en-US">English</option>
+            </select>
           </label>
-          <p class="help">Single letters use a Google English voice when available; words use the device's English voice. If Google voice is unavailable, the app uses another installed English voice. Voice availability depends on your browser and device.</p>
+          <p class="help">Filipino mode prefers an installed Filipino or Tagalog voice, including Ñ as “enye.” If unavailable, it uses an English (Philippines) or English (US) voice. Voice availability depends on your browser and device.</p>
           <label class="check-control"><input id="addToText" type="checkbox" checked> Add stable signs to text</label>
           <label class="check-control"><input id="speakEachSign" type="checkbox" checked> Speak each stable sign or alphabet letter immediately</label>
         </div>

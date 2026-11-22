@@ -76,8 +76,17 @@ test('prefers a Google English voice for letters but keeps the matching voice fo
 
 test('reports when the requested language voice is unavailable', () => {
   installSpeechEnvironment([{ name: 'English voice', lang: 'en-US' }]);
-
-  assert.throws(() => speakText('Hello', 'fil-PH'), /Only English speech is available/);
+  assert.doesNotThrow(() => speakText('Hello', 'fil-PH'));
   installSpeechEnvironment([]);
   assert.throws(() => speakText('Hello', 'en-US'), /No English speech voice is available/);
+});
+
+test('prefers a Filipino voice and speaks Ñ as enye', () => {
+  const english = { name: 'Microsoft David English', lang: 'en-US' };
+  const filipino = { name: 'Microsoft Filipino (Tagalog)', lang: 'fil-PH' };
+  const speech = installSpeechEnvironment([english, filipino]);
+
+  assert.equal(speakText('Ñ', 'fil-PH'), 'Microsoft Filipino (Tagalog)');
+  assert.equal(speech.spoken[0].text, 'enye');
+  assert.equal(speech.spoken[0].voice, filipino);
 });
