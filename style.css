@@ -279,6 +279,42 @@ nav a:hover, nav a:focus-visible { text-decoration: underline; }
   to { transform: translateY(4px) rotate(1deg); }
 }
 
+.philippine-rides {
+  position: absolute;
+  z-index: 2;
+  right: clamp(18px, 4vw, 56px);
+  bottom: 12px;
+  display: flex;
+  width: clamp(210px, 24vw, 300px);
+  align-items: flex-end;
+  justify-content: flex-end;
+  filter: drop-shadow(0 8px 7px #7a4a2828);
+  pointer-events: none;
+}
+
+.philippine-rides svg {
+  display: block;
+  overflow: visible;
+  animation: ride-bounce 3.2s ease-in-out infinite alternate;
+}
+
+.philippine-rides .jeepney {
+  width: 68%;
+  transform-origin: 50% 100%;
+}
+
+.philippine-rides .tricycle {
+  width: 38%;
+  margin-left: -12px;
+  transform-origin: 50% 100%;
+  animation-delay: -.8s;
+}
+
+@keyframes ride-bounce {
+  from { translate: 0 0; }
+  to { translate: 0 -4px; }
+}
+
 .intro::before {
   position: absolute;
   z-index: -1;
@@ -832,6 +868,7 @@ header a { color: #fff; }
   .intro { padding: 18px; }
   .intro::before, .intro::after { display: none; }
   .fiesta-banderitas { display: none; }
+  .philippine-rides { right: 12px; bottom: 8px; width: 150px; opacity: .9; }
   .panel { padding: 16px; }
   .recognition-workspace { grid-template-columns: 1fr; }
   .feature-cards { grid-template-columns: 1fr; }
