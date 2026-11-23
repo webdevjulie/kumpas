@@ -11,7 +11,7 @@ import {
 import { classifyAslAlphabet, loadAslAlphabetModel } from './aslAlphabetClassifier.js';
 import { recordDynamicAttempt, recordStaticAttempt } from './evaluation.js';
 import { deleteSavedPhrase, loadSavedPhrases, savePhrase } from './phrasebook.js';
-import { COMMON_FSL_SIGNS, getDefaultSignType } from './signLabels.js';
+import { ALPHABET_LABELS, COMMON_FSL_SIGNS, getDefaultSignType } from './signLabels.js';
 import { speakText } from './speechOutput.js';
 import { renderTextOutput } from './textOutput.js';
 
@@ -126,10 +126,7 @@ function updateSamples() {
     .filter(label => !/^[A-ZÑ]$/.test(label) && !COMMON_FSL_SIGNS.includes(label))
     .sort((a, b) => a.localeCompare(b));
   const selectedLabel = labelInput.value;
-  const letterOptions = [
-    ...Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index)),
-    'Ñ'
-  ];
+  const letterOptions = ALPHABET_LABELS;
   const createOptionGroup = (name, labels) => {
     const group = document.createElement('optgroup');
     group.label = name;

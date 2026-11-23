@@ -31,6 +31,7 @@ export async function openCamera(deviceId) {
     audio: false,
     video: {
       ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+      ...(!deviceId ? { facingMode: { ideal: 'user' } } : {}),
       width: { ideal: 640 },
       height: { ideal: 480 }
     }

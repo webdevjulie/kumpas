@@ -6,10 +6,9 @@
   <title>KUMPAS | FSL Sign-to-Text-to-Speech</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/main-F5AEVlR5.js?v=2e35718"></script>
-  <link rel="modulepreload" crossorigin href="./assets/evaluation-DKt-UYL-.js">
-  <link rel="stylesheet" crossorigin href="./assets/evaluation-DC6g6PIH.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" src="./src/main.js"></script>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <a class="skip-link" href="#recognitionTools">Skip to recognition tools</a>
@@ -45,6 +44,7 @@
             <p class="help">Choose a camera, then select Connect camera. Your video stays on this device.</p>
           </div>
         </div>
+        <p class="mobile-camera-note">Using a phone? Open <a href="https://webdevjulie.github.io/kumpas/">KUMPAS on your phone</a> and allow camera access. The default camera prefers the front-facing camera.</p>
         <details class="camera-help">
           <summary>Having trouble connecting?</summary>
           <p>On a phone, open KUMPAS using its HTTPS address and allow camera access. A computer's local IP address does not allow phone-camera access. To use your phone as a computer webcam, use a webcam bridge such as Iriun.</p>
@@ -116,7 +116,7 @@
       <section id="step-data" class="workflow-stage" role="tabpanel" aria-labelledby="tab-data">
         <h2>Gather approved sign samples</h2>
         <p class="help">Choose an FSL sign or alphabet letter, connect the camera, and capture varied, correctly labeled examples. Samples stay on this device.</p>
-        <p class="notice">Common sign labels are not pre-trained. Capture at least 3 separate, approved samples per sign, then train KNN to recognize them.</p>
+        <p class="notice">Common phrase labels and &Ntilde; are not pre-trained. Capture at least 3 separate, approved samples per sign or letter, then train KNN to recognize them.</p>
         <details class="sample-guidance">
           <summary>More about samples and model limits</summary>
           <p class="help">The bundled pretrained model recognizes static A–Z handshapes only; it does not recognize common FSL words. Common signs default to Dynamic mode; verify the correct sign type against an FSL reference, then capture at least 3 separate, correctly labeled performances per sign and use Trained KNN. Use Capture one once per separate static attempt; adjacent video frames from one held pose are not independent examples. Static letters use Static mode, except J/Z. The model runs locally and is licensed CC BY-NC 4.0; see its attribution and license in the models folder.</p>
