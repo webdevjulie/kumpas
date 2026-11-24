@@ -19,8 +19,8 @@ export const COMMON_FSL_SIGNS = Object.freeze([
 ]);
 
 export const ALPHABET_LABELS = Object.freeze([
-  ...Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index)),
-  'Ñ'
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+  'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
 ]);
 
 const DYNAMIC_SIGN_LABELS = new Set([...COMMON_FSL_SIGNS, 'J', 'Z']);
