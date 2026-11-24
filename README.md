@@ -27,7 +27,7 @@ MediaPipe's JavaScript and WASM runtime are bundled with the app. The hand model
 
 ## Deploy to GitHub Pages
 
-The GitHub Actions workflow builds and deploys this Vite app whenever changes are pushed to `main`, then verifies that GitHub Pages serves the bundled app rather than raw source modules. In the repository settings, open **Pages** and set **Build and deployment → Source** to **GitHub Actions**. The project site is [https://webdevjulie.github.io/kumpas/](https://webdevjulie.github.io/kumpas/). Use that HTTPS URL, allow camera access, and keep an internet connection for the first hand-model download.
+The GitHub Actions workflow builds and deploys this Vite app whenever changes are pushed to `main`, then verifies that GitHub Pages serves the bundled app rather than raw source modules. In the repository settings, open **Pages** and set **Build and deployment → Source** to **GitHub Actions**. If Pages is configured to serve the repository root instead, the home page redirects to the checked-in production build in `dist/`. The project site is [https://webdevjulie.github.io/kumpas/](https://webdevjulie.github.io/kumpas/). Use that HTTPS URL, allow camera access, and keep an internet connection for the first hand-model download.
 
 For a local shareable copy, run `npm run build`, then include the `dist` folder, `START KUMPAS.bat`, and `serve-local.js` together. Extract them into one folder and run the batch file; it serves the app at `http://127.0.0.1:8000/`. Node.js and internet access for the initial hand-model download are required.
 

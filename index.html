@@ -8,6 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module" src="./src/main.js"></script>
+  <script>
+    const sourceEntry = document.querySelector('script[type="module"][src="./src/main.js"]');
+    if (location.hostname.endsWith('.github.io') && sourceEntry) {
+      const siteRoot = location.pathname
+        .replace(/(?:index\.html)?\/?$/, '')
+        .replace(/\/?$/, '/');
+      location.replace(`${siteRoot}dist/`);
+    }
+  </script>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>

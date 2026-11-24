@@ -7,7 +7,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/main-Dt-45yM0.js"></script>
+  <script>
+    const sourceEntry = document.querySelector('script[type="module"][src="./src/main.js"]');
+    if (location.hostname.endsWith('.github.io') && sourceEntry) {
+      const siteRoot = location.pathname
+        .replace(/(?:index\.html)?\/?$/, '')
+        .replace(/\/?$/, '/');
+      location.replace(`${siteRoot}dist/`);
+    }
+  </script>
+  <script type="module" crossorigin src="./assets/main-DzVdYx36.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="stylesheet" crossorigin href="./assets/main-B_TttBVx.css">
 </head>

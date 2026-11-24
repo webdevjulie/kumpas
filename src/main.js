@@ -305,6 +305,7 @@ async function stopCameraConnection() {
 async function connectCamera() {
   if (cameraConnectionPending) return;
   cameraConnectionPending = true;
+  let cameraPreviewStarted = false;
   try {
     if (stream) await stopCameraConnection();
     byId('connectCamera').disabled = true;
@@ -312,6 +313,7 @@ async function connectCamera() {
     stream = await openCamera(cameraSelect.value);
     video.srcObject = stream;
     await video.play();
+    cameraPreviewStarted = true;
     byId('cameraPlaceholder').hidden = true;
     await refreshCameras(stream.getVideoTracks()[0].getSettings().deviceId);
 
@@ -337,17 +339,27 @@ async function connectCamera() {
     setStatus('Ready! Show one or two hands to the camera.');
     animationFrame = requestAnimationFrame(trackFrame);
   } catch (error) {
-    await stopCameraConnection();
-    if (error?.name === 'NotAllowedError') {
-      showError(new Error('Camera permission was denied. Allow camera access in your browser and phone settings, then try again.'));
-    } else if (error?.name === 'NotFoundError') {
-      showError(new Error('No available camera found. Connect or enable a camera, then refresh the camera list.'));
-    } else if (error?.name === 'NotReadableError') {
-      showError(new Error('The camera is already in use or unavailable. Close other camera apps and try again.'));
-    } else if (error?.name === 'SecurityError') {
-      showError(new Error('Camera access is blocked on this page. Open KUMPAS using its HTTPS address on your phone.'));
+    if (cameraPreviewStarted && stream) {
+      stopRecognition();
+      landmarker?.close();
+      landmarker = null;
+      byId('connectCamera').disabled = false;
+      byId('disconnectCamera').disabled = false;
+      const message = error instanceof Error ? error.message : String(error);
+      showError(new Error(`Camera preview is active, but setup could not finish: ${message}`));
     } else {
-      showError(error);
+      await stopCameraConnection();
+      if (error?.name === 'NotAllowedError') {
+        showError(new Error('Camera permission was denied. Allow camera access in your browser and phone settings, then try again.'));
+      } else if (error?.name === 'NotFoundError') {
+        showError(new Error('No available camera found. Connect or enable a camera, then refresh the camera list.'));
+      } else if (error?.name === 'NotReadableError') {
+        showError(new Error('The camera is already in use or unavailable. Close other camera apps and try again.'));
+      } else if (error?.name === 'SecurityError') {
+        showError(new Error('Camera access is blocked on this page. Open KUMPAS using its HTTPS address on your phone.'));
+      } else {
+        showError(error);
+      }
     }
   } finally {
     cameraConnectionPending = false;
